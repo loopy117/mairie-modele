@@ -74,7 +74,7 @@ const donnees = seo.noindex ? [] : [graphe(site, base, { url, titre, description
   <body>
     <a class="lien-evitement" href="#contenu">Aller au contenu</a>
     <Header courant={url} landing={gabarit === 'landing'} />
-    <main id="contenu" tabindex="-1" {...(indexerRecherche ? { 'data-pagefind-body': '', 'data-pagefind-filter': `type:${typeRecherche}` } : {})}>
+    <main id="contenu" tabindex="-1" {...(indexerRecherche ? { 'data-pagefind-body': '', 'data-pagefind-filter': `type:${typeRecherche}`, 'data-pagefind-meta': `title:${url === '/' ? `Accueil · ${site.nom}` : titre}` } : {})}>
       {filAriane && <FilAriane url={url} titre={titre} />}
       <slot />
     </main>

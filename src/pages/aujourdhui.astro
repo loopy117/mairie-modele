@@ -57,7 +57,7 @@ const alerteActive = alerteDonnees.actif && (!alerteDonnees.jusqu_au || alerteDo
     </Section>
   )}
   <Section background="alt" titre="Dernières publications">
-    <ul class="publi">
+    <ul class="publi" data-pagefind-ignore="all">
       {publications.map((p) => <li><span class="publi__type">{p.type} · {dateLongue(p.data.date)}</span><a href={urlElement(p.nom as any, p.id)}>{p.data.titre}</a></li>)}
     </ul>
   </Section>
