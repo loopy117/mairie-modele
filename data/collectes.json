@@ -1,0 +1,8 @@
+{
+  "consigne": "Sortez les bacs la veille au soir, poignée côté rue.",
+  "collectes": [
+    { "type": "Ordures ménagères", "jours": ["lundi", "jeudi"] },
+    { "type": "Tri sélectif (bac jaune)", "jours": ["mercredi"] },
+    { "type": "Verre", "jours": [], "note": "Points d'apport volontaire : parking de la salle des fêtes et place de l'Église" }
+  ]
+}

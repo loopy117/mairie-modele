@@ -12,7 +12,7 @@ sections:
     image: { src: /img/commune/illustration-mairie.jpg, alt: "Illustration : la mairie et les maisons du village, au pied des collines" }
     ctas:
       - { label: Vos démarches, href: /demarches, style: primaire }
-      - { label: Contacter la mairie, href: /contact, style: secondaire }
+      - { label: Aujourd'hui dans la commune, href: /aujourdhui, style: secondaire }
     points:
       - Mairie ouverte du lundi au vendredi
       - "Accueil : 04 00 00 00 00"
@@ -29,8 +29,20 @@ sections:
       - { icone: telechargement, titre: Documents, texte: "Bulletin municipal, plan local d'urbanisme, menus de la cantine.", lien: { label: Voir les documents, href: /documents } }
       - { icone: personnes, titre: Annuaire, texte: "Associations, commerces, santé : qui contacter dans la commune.", lien: { label: Ouvrir l'annuaire, href: /annuaire } }
 
-  - block: boucle
+  - block: features
+    variant: liste
     background: alt
+    surtitre: Pour vous
+    titre: Trouver l'essentiel selon votre situation
+    items:
+      - { icone: maison, titre: Je viens d'arriver, texte: "Démarches, déchets, école, transports : bien s'installer à Saint-Exemple.", lien: { label: Mon parcours, href: /parcours/nouvel-habitant } }
+      - { icone: personnes, titre: Je suis parent, texte: "École, cantine, garderie et activités pour les enfants.", lien: { label: Mon parcours, href: /parcours/parent } }
+      - { icone: telephone, titre: Je suis senior, texte: "Santé, transport à la demande, services de proximité.", lien: { label: Mon parcours, href: /parcours/senior } }
+      - { icone: outil, titre: Je veux faire des travaux, texte: "Autorisations d'urbanisme, plan local d'urbanisme, artisans.", lien: { label: Mon parcours, href: /parcours/travaux } }
+      - { icone: calendrier, titre: Je suis une association, texte: "Salles, agenda, annuaire : faire vivre votre association.", lien: { label: Mon parcours, href: /parcours/association } }
+      - { icone: euro, titre: Je crée une entreprise, texte: "S'installer, se faire connaître, les règles d'urbanisme.", lien: { label: Mon parcours, href: /parcours/entreprise } }
+
+  - block: boucle
     surtitre: Actualités
     titre: Ce qui se passe à Saint-Exemple
     source: actualites
@@ -42,6 +54,7 @@ sections:
     lien_tout_voir: { label: Toutes les actualités, href: /actualites }
 
   - block: boucle
+    background: alt
     surtitre: Agenda
     titre: Les prochains rendez-vous
     source: agenda
@@ -53,6 +66,17 @@ sections:
     lien_tout_voir: { label: Tout l'agenda, href: /agenda }
     si_vide: message
     message_vide: Aucun rendez-vous à venir pour le moment.
+
+  - block: boucle
+    surtitre: Projets
+    titre: Ce que la commune prépare
+    source: projets
+    ordre: date desc
+    nombre: 3
+    carte: projet-carte
+    affichage: grid
+    options: { colonnes: 3 }
+    lien_tout_voir: { label: "Tous les projets, sur la carte aussi", href: /projets }
 
   - block: cta
     variant: bandeau

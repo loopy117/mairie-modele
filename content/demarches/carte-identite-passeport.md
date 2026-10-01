@@ -11,5 +11,6 @@ pieces:
   - Justificatif de domicile de moins d'un an
   - Ancienne carte ou ancien passeport
   - Timbre fiscal pour un passeport ou une carte perdue ou volée
+publics: [nouvel-habitant]
 ---
 La mairie de Saint-Exemple ne délivre pas directement les cartes d'identité et les passeports : faites votre **pré-demande en ligne**, puis prenez rendez-vous dans une mairie équipée.

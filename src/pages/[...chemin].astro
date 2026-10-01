@@ -13,7 +13,8 @@ import Sections from '../components/Sections.astro';
 import Section from '../components/Section.astro';
 import Disposition from '../dispositions/Disposition.astro';
 import { gabaritDetail } from '../layouts/details';
-import { reglages } from '../lib/collections';
+import { reglages, categoriesArchive } from '../lib/collections';
+import parcours from '../../data/parcours.json';
 import { urlPage, urlElement, urlArchive, urlCategorie } from '../lib/urls';
 import { executer, estPublie } from '../lib/requete';
 import { nomsCollections } from '../schemas/collections';
@@ -46,12 +47,19 @@ export async function getStaticPaths() {
       const tries = executer(tous, { ordre: a.ordre, filtre: a.filtre }, { tout: true });
       paginer(tries, (n) => urlArchive(nom, n), a.titre);
       if (a.parCategorie) {
-        for (const [slug, libelle] of Object.entries(taxonomies.metiers)) {
-          const liste = tries.filter((e) => e.data.categorie === slug);
+        const { champ, libelles } = categoriesArchive(nom);
+        for (const [slug, libelle] of Object.entries(libelles)) {
+          const liste = tries.filter((e) => e.data[champ] === slug);
           if (liste.length) paginer(liste, (n) => urlCategorie(nom, slug, n), `${a.titre} · ${libelle}`, slug);
         }
       }
     }
+  }
+  // Parcours (« Je viens d'arriver »…) : toutes les fiches publiées qui portent ce public, regroupées par collection
+  for (const slug of Object.keys(parcours)) {
+    let n = 0;
+    for (const nom of nomsCollections) n += (await getCollection(nom as any)).filter((e: any) => estPublie(e) && (e.data.publics ?? []).includes(slug)).length;
+    if (n) chemins.push({ params: { chemin: `parcours/${slug}` }, props: { type: 'parcours', slug } });
   }
   return chemins;
 }
@@ -95,19 +103,43 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
   );
 })()}
 
+{props.type === 'parcours' && await (async () => {
+  const p = (parcours as Record<string, { titre: string; intro: string }>)[props.slug];
+  const groupes = [] as { nom: string; libelle: string; elements: any[] }[];
+  for (const nom of nomsCollections) {
+    const els = (await getCollection(nom as any)).filter((e: any) => estPublie(e) && (e.data.publics ?? []).includes(props.slug)).map((e: any) => ({ id: e.id, data: e.data }));
+    if (els.length) groupes.push({ nom, libelle: reglages[nom].libelle, elements: executer(els, { ordre: reglages[nom].archive?.ordre ?? 'titre asc' }, { tout: true }) });
+  }
+  const autres = Object.entries(parcours as Record<string, { titre: string }>).filter(([s]) => s !== props.slug);
+  return (
+    <Base titre={p.titre} seo={{ description: p.intro }} url={url}>
+      <Sections sections={[{ block: 'hero', variant: 'minimal', surtitre: 'Parcours', titre: p.titre, texte: p.intro }]} />
+      {groupes.map((g, i) => (
+        <Section titre={g.libelle} background={i % 2 ? 'alt' : 'clair'}>
+          <Disposition elements={g.elements} carte={reglages[g.nom as keyof typeof reglages].archive!.carte} affichage={reglages[g.nom as keyof typeof reglages].archive!.affichage} options={reglages[g.nom as keyof typeof reglages].archive!.options} />
+        </Section>
+      ))}
+      <Section background="alt" titre="Les autres parcours">
+        <nav class="filtres" aria-label="Autres parcours">{autres.map(([s, x]) => <a href={`/parcours/${s}`}>{x.titre}</a>)}</nav>
+      </Section>
+    </Base>
+  );
+})()}
+
 {props.type === 'archive' && await (async () => {
   const r = reglages[props.collection as keyof typeof reglages];
   const a = r.archive!;
   const tous = (await getCollection(props.collection)).map((e: any) => ({ id: e.id, data: e.data }));
   const elements = props.ids.map((id: string) => tous.find((e) => e.id === id));
-  const cats = a.parCategorie ? Object.entries(taxonomies.metiers).filter(([s]) => tous.some((e) => e.data.categorie === s && estPublie(e))) : [];
+  const regroupement = categoriesArchive(props.collection);
+  const cats = a.parCategorie ? Object.entries(regroupement.libelles).filter(([s]) => tous.some((e) => e.data[regroupement.champ] === s && estPublie(e))) : [];
   const urlN = (n: number) => (props.categorie ? urlCategorie(props.collection, props.categorie, n) : urlArchive(props.collection, n));
   return (
     <Base titre={props.titre + (props.page > 1 ? ` — page ${props.page}` : '')} seo={{ description: a.intro }} url={url} typePage="CollectionPage">
       <Sections sections={[{ block: 'hero', variant: 'minimal', titre: props.titre, texte: a.intro }]} />
       <Section>
         {cats.length > 1 && (
-          <nav class="filtres" aria-label="Filtrer par thème">
+          <nav class="filtres" aria-label={regroupement.titre}>
             <a href={urlArchive(props.collection)} aria-current={!props.categorie ? 'page' : undefined}>Tous</a>
             {cats.map(([s, l]) => <a href={urlCategorie(props.collection, s)} aria-current={props.categorie === s ? 'page' : undefined}>{l}</a>)}
           </nav>

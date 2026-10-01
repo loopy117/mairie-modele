@@ -1,0 +1,22 @@
+---
+/** Frise d'avancement d'un projet municipal : étude → concertation → voté → travaux → terminé. */
+import { AVANCEMENTS } from '../schemas/collections';
+interface Props { avancement: string; compact?: boolean }
+const { avancement, compact = false } = Astro.props;
+const etapes = Object.entries(AVANCEMENTS);
+const rang = etapes.findIndex(([k]) => k === avancement);
+---
+<ol class:list={['avt', compact && 'avt--compact']} aria-label={`Avancement : ${(AVANCEMENTS as Record<string, string>)[avancement]}`}>
+  {etapes.map(([k, l], i) => (
+    <li class:list={[i < rang && 'fait', i === rang && 'actuel']} aria-current={i === rang ? 'step' : undefined}><span>{l}</span></li>
+  ))}
+</ol>
+<style>
+  .avt { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .avt li { border-top: 4px solid var(--c-border); padding-top: 6px; font-size: 13px; color: var(--c-text-muted); }
+  .avt li.fait { border-color: var(--c-accent); }
+  .avt li.actuel { border-color: var(--c-primary); color: var(--c-ink); font-weight: 700; }
+  .avt--compact li span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .avt--compact li.actuel span { position: static; width: auto; height: auto; clip: auto; white-space: nowrap; }
+  @media (max-width: 560px) { .avt:not(.avt--compact) li:not(.actuel) span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+</style>

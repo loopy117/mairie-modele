@@ -9,5 +9,6 @@ pieces:
   - Formulaire Cerfa adapté au projet
   - Plan de situation et plan de masse
   - Photographies du terrain
+publics: [travaux, entreprise]
 ---
 Avant de déposer votre dossier, consultez le **plan local d'urbanisme** dans la rubrique [Documents](/documents) ou prenez rendez-vous avec le service urbanisme.

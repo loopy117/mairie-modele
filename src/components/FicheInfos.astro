@@ -4,6 +4,7 @@
  * d'un acte, pièces à fournir d'une démarche, coordonnées d'une fiche de l'annuaire.
  */
 import Section from './Section.astro';
+import Avancement from './Avancement.astro';
 import { infosDocument, miseEnLigne, dateLongue, dateHeure } from '../lib/publication';
 interface Props { collection: string; id: string; data: any }
 const { collection, id, data: d } = Astro.props;
@@ -31,11 +32,34 @@ if (collection === 'annuaire') {
   if (d.site) lignes.push(['Site internet', d.site.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''), d.site]);
   if (d.horaires) lignes.push(['Horaires', d.horaires]);
 }
-const rien = !lignes.length && !doc && !pieces.length && !(collection === 'demarches' && d.lien);
+let documents: { titre: string; doc: NonNullable<ReturnType<typeof infosDocument>> }[] = [], surCarte = false, lienInfo: string | undefined;
+const tel = (t: string) => 'tel:' + t.replace(/[^\d+]/g, '').replace(/^0/, '+33');
+if (collection === 'projets') {
+  if (d.date) lignes.push([d.date_fin ? 'Période' : 'Depuis', d.date_fin ? `${dateLongue(d.date)} → ${dateLongue(d.date_fin)}` : dateLongue(d.date)]);
+  else if (d.date_fin) lignes.push(['Fin prévue', dateLongue(d.date_fin)]);
+  if (d.lieu) lignes.push(['Lieu', d.lieu]);
+  if (d.budget) lignes.push(['Budget', d.budget]);
+  documents = (d.documents ?? []).map((x: any) => ({ titre: x.titre, doc: infosDocument(x.fichier) })).filter((x: any) => x.doc);
+  surCarte = d.latitude != null && d.longitude != null;
+}
+if (collection === 'lieux') {
+  if (d.adresse) lignes.push(['Adresse', d.adresse]);
+  if (d.horaires) lignes.push(['Horaires', d.horaires]);
+  if (d.telephone) lignes.push(['Téléphone', d.telephone, tel(d.telephone)]);
+  if (d.email) lignes.push(['E-mail', d.email, 'mailto:' + d.email]);
+  if (d.pmr) lignes.push(['Accessibilité', ({ oui: 'Accessible aux personnes à mobilité réduite', partiel: 'Accès partiel pour les personnes à mobilité réduite', non: 'Non accessible aux personnes à mobilité réduite' } as Record<string, string>)[d.pmr] + (d.pmr_detail ? ` : ${d.pmr_detail}` : '')]);
+  surCarte = d.latitude != null && d.longitude != null;
+}
+if (collection === 'infos') {
+  if (d.contact) lignes.push(['Contact', d.contact]);
+  lienInfo = d.lien;
+}
+const rien = !lignes.length && collection !== 'projets' && !documents.length && !surCarte && !lienInfo && !doc && !pieces.length && !(collection === 'demarches' && d.lien);
 ---
 {!rien && (
   <Section largeur="etroite" spacing="compact">
     <div class="fi">
+      {collection === 'projets' && <Avancement avancement={d.avancement} />}
       {lignes.length > 0 && (
         <dl class="fi__liste">
           {lignes.map(([l, t, href]) => <><dt>{l}</dt><dd>{href ? <a href={href} {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}>{t}{href.startsWith('http') && <span class="visually-hidden"> (nouvel onglet)</span>}</a> : t}</dd></>)}
@@ -54,6 +78,15 @@ const rien = !lignes.length && !doc && !pieces.length && !(collection === 'demar
       )}
       {collection === 'demarches' && d.lien && (
         <p><a class="fi__bouton" href={d.lien} target="_blank" rel="noopener">Faire la démarche en ligne<span class="visually-hidden"> (nouvel onglet)</span></a></p>
+      )}
+      {documents.length > 0 && (
+        <div class="fi__pieces"><h2>Documents</h2><ul>{documents.map((x) => <li><a href={x.doc.url} download>{x.titre}</a> <span class="fi__taille">(PDF, {x.doc.taille})</span></li>)}</ul></div>
+      )}
+      {(surCarte || lienInfo) && (
+        <p class="fi__liens">
+          {surCarte && <a href={`/carte#${collection}-${id}`}>Voir sur la carte de la commune</a>}
+          {lienInfo && <a href={lienInfo} target="_blank" rel="noopener">Pour aller plus loin<span class="visually-hidden"> (nouvel onglet)</span></a>}
+        </p>
       )}
       {pieces.length > 0 && (
         <div class="fi__pieces">
@@ -75,5 +108,6 @@ const rien = !lignes.length && !doc && !pieces.length && !(collection === 'demar
   .fi__doc { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
   .fi__preuve { font-size: 13px; color: var(--c-text-muted); word-break: break-all; }
   .fi__preuve code { font-size: 12px; }
+  .fi__taille { color: var(--c-text-muted); font-size: 14px; } .fi__liens { display: flex; gap: 18px; flex-wrap: wrap; font-weight: 600; }
   .fi__pieces h2 { font-size: var(--fs-xl); margin-bottom: 8px; } .fi__pieces ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 </style>

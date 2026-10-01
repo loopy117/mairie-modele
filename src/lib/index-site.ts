@@ -2,7 +2,8 @@
  * Index du site : toutes les URL générées, avec leur titre et leur statut.
  * Pur TypeScript, partagé par le rendu (menu, fil d'Ariane) et la validation.
  */
-import { reglages } from './collections';
+import { reglages, categoriesArchive } from './collections';
+import parcours from '../../data/parcours.json' with { type: 'json' };
 import { urlPage, urlElement, urlArchive, urlCategorie } from './urls';
 import { estPublie, type Element } from './requete';
 import type { NomCollection } from '../schemas/collections';
@@ -21,8 +22,9 @@ export function construireIndex(pages: Element[], collections: Record<NomCollect
       // Archive vide (aucun élément publié) : pas de page générée, liens masqués
       index.set(urlArchive(nom), { url: urlArchive(nom), titre: r.libelle, publie: liste.some((e) => estPublie(e)), type: 'archive', collection: nom });
       if (r.archive.parCategorie) {
-        const cats = new Set(liste.filter((e) => estPublie(e)).map((e) => e.data.categorie));
-        for (const c of cats) index.set(urlCategorie(nom, c), { url: urlCategorie(nom, c), titre: `${r.libelle} · ${taxonomies.metiers[c] ?? c}`, publie: true, type: 'categorie', collection: nom });
+        const { champ, libelles } = categoriesArchive(nom);
+        const cats = new Set(liste.filter((e) => estPublie(e)).map((e) => e.data[champ]).filter(Boolean));
+        for (const c of cats) index.set(urlCategorie(nom, c), { url: urlCategorie(nom, c), titre: `${r.libelle} · ${libelles[c] ?? c}`, publie: true, type: 'categorie', collection: nom });
       }
     }
     if (r.detail) {
@@ -31,6 +33,13 @@ export function construireIndex(pages: Element[], collections: Record<NomCollect
         index.set(url, { url, titre: e.data.titre, publie: estPublie(e), type: 'element', collection: nom, id: e.id, resume: e.data.resume, ancres: e.data.ancres });
       }
     }
+  }
+  // Vues générées à partir des contenus (src/pages/aujourdhui.astro, carte.astro, parcours)
+  index.set('/aujourdhui', { url: '/aujourdhui', titre: "Aujourd'hui dans la commune", publie: true, type: 'page' });
+  if ((collections as any).lieux?.some((e: Element) => estPublie(e) && e.data.latitude != null)) index.set('/carte', { url: '/carte', titre: 'Carte de la commune', publie: true, type: 'page' });
+  for (const [slug, p] of Object.entries(parcours)) {
+    const publie = Object.values(collections).some((l) => l.some((e) => estPublie(e) && (e.data.publics ?? []).includes(slug)));
+    index.set(`/parcours/${slug}`, { url: `/parcours/${slug}`, titre: p.titre, publie, type: 'page' });
   }
   return index;
 }

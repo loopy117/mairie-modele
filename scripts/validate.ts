@@ -20,6 +20,8 @@ import siteDonnees from '../data/site.json' with { type: 'json' };
 import { site as siteSchema } from '../src/schemas/site';
 import formulairesDonnees from '../data/formulaires.json' with { type: 'json' };
 import alerteDonnees from '../data/alerte.json' with { type: 'json' };
+import collectesDonnees from '../data/collectes.json' with { type: 'json' };
+import parcoursDonnees from '../data/parcours.json' with { type: 'json' };
 import { alerte } from '../src/schemas/alerte';
 import { formulaires as formulairesSchema } from '../src/schemas/formulaires';
 import { tarifs as tarifsSchema } from '../src/schemas/tarifs';
@@ -86,6 +88,16 @@ for (const nom of nomsCollections) {
 {
   const r = alerte.safeParse(alerteDonnees);
   if (!r.success) for (const i of r.error.issues) signaler('erreur', 'data/alerte.json', i.path as any, i.message);
+}
+
+// data/collectes.json et data/parcours.json (vues « Aujourd'hui » et parcours)
+{
+  const J = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+  collectesDonnees.collectes.forEach((c: any, i: number) => {
+    if (!c.type) signaler('erreur', 'data/collectes.json', ['collectes', i, 'type'], 'type de collecte manquant');
+    for (const j of c.jours ?? []) if (!J.includes(j)) signaler('erreur', 'data/collectes.json', ['collectes', i, 'jours'], `jour inconnu : « ${j} »`);
+  });
+  for (const [slug, p] of Object.entries(parcoursDonnees as Record<string, any>)) if (!p.titre || !p.intro) signaler('erreur', 'data/parcours.json', slug, 'titre et intro obligatoires');
 }
 
 // data/formulaires.json : formulaires métier (spec partie 5)

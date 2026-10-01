@@ -1,0 +1,8 @@
+{
+  "nouvel-habitant": { "titre": "Je viens d'arriver", "intro": "Bienvenue à Saint-Exemple ! Les démarches et les informations utiles pour bien vous installer." },
+  "parent": { "titre": "Je suis parent", "intro": "École, cantine, périscolaire, activités : tout ce qui concerne vos enfants." },
+  "senior": { "titre": "Je suis senior", "intro": "Aides, santé, transports et rendez-vous pour les aînés de la commune." },
+  "entreprise": { "titre": "Je crée une entreprise", "intro": "S'installer, se faire connaître, trouver un local : les contacts et démarches utiles." },
+  "travaux": { "titre": "Je veux faire des travaux", "intro": "Autorisations d'urbanisme, règles du plan local d'urbanisme, déchets de chantier." },
+  "association": { "titre": "Je suis une association", "intro": "Salles, subventions, agenda, annuaire : faire vivre votre association à Saint-Exemple." }
+}

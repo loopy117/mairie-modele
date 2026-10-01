@@ -8,5 +8,6 @@ contact: Accueil de la mairie
 pieces:
   - "Pièce d'identité en cours de validité"
   - Justificatif de domicile de moins de 3 mois
+publics: [nouvel-habitant]
 ---
 Les jeunes recensés à 16 ans sont inscrits automatiquement à leur majorité. Après un déménagement, pensez à vous inscrire dans votre nouvelle commune.

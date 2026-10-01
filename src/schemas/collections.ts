@@ -1,5 +1,6 @@
 import { z } from 'astro/zod';
 import { image, metier } from './communs';
+import parcours from '../../data/parcours.json' with { type: 'json' };
 
 const seo = z
   .object({
@@ -30,6 +31,11 @@ const communs = {
     .optional()
     .describe("Expressions qui, dans le texte des autres pages, deviennent un lien vers celle-ci (ex. « carte d'identité »). Précises, 2 à 6 mots ; jamais « ici »."),
   role: z.enum(['aimant', 'seo']).optional().describe('aimant : contenu que le visiteur a envie d\'ouvrir ; seo : page d\'entrée depuis Google.'),
+  publics: z
+    .array(z.enum(Object.keys(parcours) as [string, ...string[]]))
+    .max(6)
+    .default([])
+    .describe('Parcours où cette fiche apparaît (je viens d\'arriver, je suis parent… : data/parcours.json)'),
   /** Sections facultatives ajoutées après le corps sur la page de détail (validées par le schéma de page). */
   sections: z.array(z.any()).optional(),
 };
@@ -43,13 +49,51 @@ export const TYPES_ACTES = {
   autre: 'Autre acte',
 } as const;
 
+/** Acteurs locaux : une seule collection, un annuaire par type (pages /annuaire/categorie/<type>). */
 export const TYPES_ANNUAIRE = {
-  association: 'Association',
-  commerce: 'Commerce et artisanat',
+  association: 'Associations',
+  commerce: 'Commerces',
+  artisan: 'Artisans',
   sante: 'Santé',
-  'service-public': 'Service public',
+  'service-public': 'Services publics',
+  producteur: 'Producteurs',
   hebergement: 'Hébergement et restauration',
 } as const;
+
+export const AVANCEMENTS = {
+  etude: 'À l\'étude',
+  consultation: 'Concertation',
+  vote: 'Voté',
+  travaux: 'En travaux',
+  termine: 'Terminé',
+} as const;
+
+export const TYPES_LIEUX = {
+  mairie: 'Mairie et services',
+  ecole: 'Écoles et enfance',
+  salle: 'Salles',
+  sport: 'Sport',
+  culture: 'Culture et patrimoine',
+  parking: 'Parkings',
+  defibrillateur: 'Défibrillateurs',
+  dechets: 'Déchets et recyclage',
+  nature: 'Parcs et nature',
+} as const;
+
+export const THEMES_INFOS = {
+  dechets: 'Déchets',
+  eau: 'Eau et assainissement',
+  transports: 'Transports',
+  ecole: 'École et enfance',
+  sante: 'Santé',
+  cimetiere: 'Cimetière',
+  urbanisme: 'Urbanisme',
+  urgences: 'Urgences',
+  vie: 'Vie quotidienne',
+} as const;
+
+const cles = <T extends Record<string, string>>(o: T) => Object.keys(o) as [string, ...string[]];
+const gps = { latitude: z.number().min(-90).max(90).optional(), longitude: z.number().min(-180).max(180).optional() };
 
 const email = z.union([z.string().email(), z.literal('')]).optional();
 const telephone = z.string().max(30).optional();
@@ -97,7 +141,7 @@ export const collectionSchemas = {
   annuaire: z
     .object({
       ...communs,
-      type: z.enum(Object.keys(TYPES_ANNUAIRE) as [string, ...string[]]),
+      type: z.enum(cles(TYPES_ANNUAIRE)).describe('Type d\'acteur local'),
       adresse: z.string().max(160).optional(),
       telephone,
       email,
@@ -105,7 +149,47 @@ export const collectionSchemas = {
       horaires: z.string().max(160).optional(),
     })
     .strict()
-    .describe('Une fiche de l\'annuaire (association, commerce, santé…). Page : /annuaire/<id>.'),
+    .describe('Un acteur local (association, commerce, artisan, santé, producteur…). Page : /annuaire/<id> ; un annuaire par type.'),
+
+  projets: z
+    .object({
+      ...communs,
+      avancement: z.enum(cles(AVANCEMENTS)).describe('Où en est le projet'),
+      date: z.coerce.date().optional().describe('Début (ou date de la décision)'),
+      date_fin: z.coerce.date().optional().describe('Fin prévue ou réelle'),
+      budget: z.string().max(80).optional().describe('Ex. « 450 000 € TTC, dont 40 % de subventions »'),
+      lieu: z.string().max(120).optional(),
+      ...gps,
+      galerie: z.array(image).max(24).default([]),
+      documents: z.array(z.object({ titre: z.string().min(3).max(120), fichier: document }).strict()).max(12).default([]),
+    })
+    .strict()
+    .describe('Un projet municipal suivi dans le temps (étude, concertation, vote, travaux). Page : /projets/<id>.'),
+
+  lieux: z
+    .object({
+      ...communs,
+      type: z.enum(cles(TYPES_LIEUX)),
+      adresse: z.string().max(160).optional(),
+      ...gps,
+      horaires: z.string().max(200).optional(),
+      telephone,
+      email,
+      pmr: z.enum(['oui', 'partiel', 'non']).optional().describe('Accessible aux personnes à mobilité réduite'),
+      pmr_detail: z.string().max(200).optional().describe('Précision (entrée accessible, place réservée…)'),
+    })
+    .strict()
+    .describe('Un lieu ou équipement (salle, école, parking, défibrillateur…), placé sur la carte de la commune. Page : /lieux/<id>.'),
+
+  infos: z
+    .object({
+      ...communs,
+      theme: z.enum(cles(THEMES_INFOS)),
+      lien: z.string().url().optional().describe('Pour aller plus loin (site du syndicat des eaux, des transports…)'),
+      contact: z.string().max(160).optional(),
+    })
+    .strict()
+    .describe('Une information pratique : comment fonctionne la commune au quotidien (déchets, eau, transports…). Page : /infos-pratiques/<id>.'),
 
   documents: z
     .object({ ...communs, date: z.coerce.date(), fichier: document })

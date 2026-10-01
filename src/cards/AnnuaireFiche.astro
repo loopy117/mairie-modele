@@ -1,12 +1,12 @@
 ---
 import { urlElement } from '../lib/urls';
-import { TYPES_ANNUAIRE } from '../schemas/collections';
+const UN: Record<string, string> = { association: 'Association', commerce: 'Commerce', artisan: 'Artisan', sante: 'Santé', 'service-public': 'Service public', producteur: 'Producteur', hebergement: 'Hébergement, restauration' };
 const { element } = Astro.props;
 const d = element.data;
 const tel = d.telephone ? 'tel:' + d.telephone.replace(/[^\d+]/g, '').replace(/^0/, '+33') : null;
 ---
 <article class="af">
-  <p class="af__type">{(TYPES_ANNUAIRE as Record<string, string>)[d.type]}</p>
+  <p class="af__type">{UN[d.type] ?? d.type}</p>
   <h3 class="af__nom"><a href={urlElement('annuaire', element.id)}>{d.titre}</a></h3>
   {d.resume && <p class="af__resume">{d.resume}</p>}
   <ul class="af__contacts">

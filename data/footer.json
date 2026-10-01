@@ -3,10 +3,22 @@
     {
       "titre": "Vivre à Saint-Exemple",
       "liens": [
-        { "collection": "actualites", "label": "Actualités" },
-        { "collection": "agenda", "label": "Agenda" },
+        { "page": "/aujourdhui", "label": "Aujourd'hui dans la commune" },
+        { "collection": "infos", "label": "Infos pratiques" },
         { "collection": "annuaire", "label": "Annuaire" },
-        { "collection": "documents", "label": "Documents" }
+        { "page": "/carte", "label": "Carte de la commune" },
+        { "collection": "projets", "label": "Projets en cours" }
+      ]
+    },
+    {
+      "titre": "Je suis…",
+      "liens": [
+        { "page": "/parcours/nouvel-habitant", "label": "Je viens d'arriver" },
+        { "page": "/parcours/parent", "label": "Je suis parent" },
+        { "page": "/parcours/senior", "label": "Je suis senior" },
+        { "page": "/parcours/travaux", "label": "Je veux faire des travaux" },
+        { "page": "/parcours/association", "label": "Je suis une association" },
+        { "page": "/parcours/entreprise", "label": "Je crée une entreprise" }
       ]
     },
     {
