@@ -36,6 +36,7 @@ export function construireIndex(pages: Element[], collections: Record<NomCollect
   }
   // Vues générées à partir des contenus (src/pages/aujourdhui.astro, carte.astro, parcours)
   index.set('/aujourdhui', { url: '/aujourdhui', titre: "Aujourd'hui dans la commune", publie: true, type: 'page' });
+  index.set('/recherche', { url: '/recherche', titre: 'Rechercher dans le site', publie: true, type: 'page' });
   if ((collections as any).lieux?.some((e: Element) => estPublie(e) && e.data.latitude != null)) index.set('/carte', { url: '/carte', titre: 'Carte de la commune', publie: true, type: 'page' });
   for (const [slug, p] of Object.entries(parcours)) {
     const publie = Object.values(collections).some((l) => l.some((e) => estPublie(e) && (e.data.publics ?? []).includes(slug)));

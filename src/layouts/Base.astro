@@ -13,6 +13,7 @@ import FilAriane from '../partials/FilAriane.astro';
 import siteBrut from '../../data/site.json';
 import partage from '../../data/partage.json';
 import type { Site } from '../schemas/site';
+import { reglages } from '../lib/collections';
 import { graphe, type TypePage } from '../lib/donnees-structurees';
 const site = siteBrut as unknown as Site;
 
@@ -30,6 +31,12 @@ const { titre, seo = {}, url, gabarit = 'standard', filAriane = url !== '/', jso
 const titreSeo = seo.titre ?? `${titre} — ${site.nom}`;
 const base = Astro.site?.href.replace(/\/$/, '') ?? site.url;
 const canonique = base + (url === '/' ? '/' : url);
+// Recherche (Pagefind) : pages indexables seulement (pas 404, merci, recherche), avec leur type comme filtre.
+// NOINDEX (site en recette) n'empêche pas la recherche interne.
+const [seg1, seg2] = url.split('/').filter(Boolean);
+const collectionUrl = seg2 && seg2 !== 'categorie' ? Object.values(reglages).find((r) => r.detail && r.base.replace(/^\//, '') === seg1) : undefined;
+const typeRecherche = collectionUrl?.libelle ?? 'Pages';
+const indexerRecherche = !seo.noindex && url !== '/recherche' && !url.startsWith('/plan-du-site') && seg2 !== 'categorie';   // pages de catégorie : doublons des archives
 const noindex = seo.noindex || import.meta.env.NOINDEX === '1' || process.env.NOINDEX === '1';
 // Pas de données structurées sur une page non indexable (404, remerciement…)
 // Image de partage (réseaux sociaux) générée au build par scripts/partage.mjs, une par page indexable
@@ -67,7 +74,7 @@ const donnees = seo.noindex ? [] : [graphe(site, base, { url, titre, description
   <body>
     <a class="lien-evitement" href="#contenu">Aller au contenu</a>
     <Header courant={url} landing={gabarit === 'landing'} />
-    <main id="contenu" tabindex="-1">
+    <main id="contenu" tabindex="-1" {...(indexerRecherche ? { 'data-pagefind-body': '', 'data-pagefind-filter': `type:${typeRecherche}` } : {})}>
       {filAriane && <FilAriane url={url} titre={titre} />}
       <slot />
     </main>

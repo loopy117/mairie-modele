@@ -15,7 +15,7 @@ for (let i = 1; i < morceaux.length; i++) {
 etapes.push({ label: titre, href: url });
 const jsonld = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: etapes.map((e, i) => ({ '@type': 'ListItem', position: i + 1, name: e.label, item: (Astro.site?.href.replace(/\/$/, '') ?? site.url) + e.href })) };
 ---
-<nav class="ariane container" aria-label="Fil d'Ariane">
+<nav class="ariane container" aria-label="Fil d'Ariane" data-pagefind-ignore="all">
   <ol>{etapes.map((e, i) => <li>{i < etapes.length - 1 ? <a href={e.href}>{e.label}</a> : <span aria-current="page">{e.label}</span>}</li>)}</ol>
   <script type="application/ld+json" set:html={JSON.stringify(jsonld)} />
 </nav>

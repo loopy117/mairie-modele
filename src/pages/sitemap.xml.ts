@@ -6,6 +6,7 @@ import { indexSite } from '../lib/site';
 export const GET: APIRoute = async ({ site }) => {
   const index = await indexSite();
   const noindex = new Set<string>();
+  noindex.add('/recherche');   // page de résultats : jamais indexée
   for (const p of await getCollection('pages')) if (p.data.seo?.noindex) noindex.add(p.id === 'index' ? '/' : '/' + p.id.replace(/\/index$/, ''));
   const base = site!.href.replace(/\/$/, '');
   const urls = [...index.values()].filter((e) => e.publie && !noindex.has(e.url)).map((e) => `  <url><loc>${base}${e.url === '/' ? '/' : e.url}</loc></url>`);

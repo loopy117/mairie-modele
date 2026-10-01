@@ -1,0 +1,127 @@
+---
+/**
+ * Recherche dans le site (Pagefind) : texte complet des pages et des PDF, index statique construit après le build
+ * (scripts/recherche.mjs), chargé par morceaux dans le navigateur. Aucun service extérieur, aucun cookie.
+ * Formulaire : /recherche?q=… (le champ de l'accueil y envoie). Filtres par type de contenu.
+ */
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+---
+<Base titre="Rechercher" seo={{ titre: 'Rechercher dans le site', noindex: true }} url="/recherche">
+  <Section spacing="compact" largeur="etroite">
+    <h1 class="r__titre">Rechercher dans le site</h1>
+    <form class="r__form" role="search" action="/recherche" method="get">
+      <label for="r-champ">Que cherchez-vous ?</label>
+      <div class="r__champ">
+        <input id="r-champ" name="q" type="search" autocomplete="off" aria-describedby="r-etat" />
+        <button type="submit">Rechercher</button>
+      </div>
+    </form>
+    <div class="r__filtres" role="group" aria-label="Filtrer les résultats par type" hidden></div>
+    <p id="r-etat" class="r__etat" role="status" aria-live="polite"></p>
+    <ol id="r-resultats" class="r__liste"></ol>
+    <button type="button" class="r__plus btn btn--secondaire" hidden>Plus de résultats</button>
+  </Section>
+</Base>
+<script>
+  type Res = { id: string; data: () => Promise<{ url: string; excerpt: string; meta: { title?: string }; filters: Record<string, string[]> }> };
+  const PAR_PAGE = 10;
+  const champ = document.getElementById('r-champ') as HTMLInputElement;
+  const etat = document.getElementById('r-etat')!;
+  const liste = document.getElementById('r-resultats')!;
+  const filtres = document.querySelector<HTMLElement>('.r__filtres')!;
+  const plus = document.querySelector<HTMLButtonElement>('.r__plus')!;
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  let pf: any = null, resultats: Res[] = [], affiches = 0, type = '', requete = '';
+
+  async function charger() {
+    if (pf) return pf;
+    try {
+      pf = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+      await pf.options({ excerptLength: 26 });
+      await pf.init();
+      await pf.filters();   // charge l'index des filtres : nombres par type dans les résultats
+    } catch {
+      etat.textContent = 'La recherche est disponible sur le site publié (index construit par npm run build).';
+      pf = null;
+    }
+    return pf;
+  }
+
+  async function afficherSuite() {
+    const lot = await Promise.all(resultats.slice(affiches, affiches + PAR_PAGE).map((r) => r.data()));
+    liste.insertAdjacentHTML('beforeend', lot.map((d) => {
+      const t = d.filters?.type?.[0] ?? '';
+      const pdf = /\.pdf$/i.test(d.url);
+      // Extrait fourni par Pagefind : texte déjà échappé, mots trouvés entre <mark>
+      return `<li>${t ? `<p class="r__type">${esc(t)}${pdf ? ' · PDF' : ''}</p>` : ''}<a href="${esc(d.url)}">${esc(d.meta?.title ?? d.url)}</a><p class="r__extrait">${d.excerpt}</p></li>`;
+    }).join(''));
+    affiches += lot.length;
+    plus.hidden = affiches >= resultats.length;
+  }
+
+  async function chercher(q: string) {
+    requete = q.trim();
+    liste.innerHTML = ''; affiches = 0; plus.hidden = true;
+    if (!requete) { etat.textContent = ''; filtres.hidden = true; return; }
+    const p = await charger();
+    if (!p) return;
+    const s = await p.search(requete, type ? { filters: { type } } : {});
+    if (q.trim() !== requete) return;   // une frappe plus récente a pris le relais
+    resultats = s.results;
+    // Filtres : types présents pour cette recherche (sans filtre actif)
+    const tous = type ? await p.search(requete) : s;
+    const types = Object.entries((tous.filters?.type ?? {}) as Record<string, number>).filter(([, n]) => n > 0);
+    filtres.hidden = types.length < 2;
+    filtres.innerHTML = [['', 'Tout', tous.results.length] as const, ...types.map(([t, n]) => [t, t, n] as const)]
+      .map(([v, l, n]) => `<button type="button" data-type="${esc(v)}" aria-pressed="${v === type}">${esc(l)} <span class="r__nb">(${n})</span></button>`).join('');
+    etat.textContent = resultats.length
+      ? `${resultats.length} résultat${resultats.length > 1 ? 's' : ''} pour « ${requete} »${type ? ` dans ${type}` : ''}`
+      : `Aucun résultat pour « ${requete} ». Essayez un autre mot, ou contactez la mairie.`;
+    await afficherSuite();
+  }
+
+  const q = new URLSearchParams(location.search).get('q') ?? '';
+  champ.value = q;
+  chercher(q);
+  let minuterie: number | undefined;
+  champ.addEventListener('input', () => { clearTimeout(minuterie); minuterie = window.setTimeout(() => chercher(champ.value), 300); });
+  champ.addEventListener('focus', () => { charger(); }, { once: true });
+  document.querySelector('.r__form')!.addEventListener('submit', (ev) => {
+    ev.preventDefault(); clearTimeout(minuterie);
+    history.replaceState(null, '', `?q=${encodeURIComponent(champ.value)}`);
+    chercher(champ.value);
+  });
+  filtres.addEventListener('click', (ev) => {
+    const b = (ev.target as HTMLElement).closest<HTMLButtonElement>('button[data-type]');
+    if (!b) return;
+    type = b.dataset.type ?? '';
+    chercher(champ.value);
+  });
+  plus.addEventListener('click', () => {
+    const premier = affiches;
+    afficherSuite().then(() => liste.querySelectorAll<HTMLAnchorElement>('li a')[premier]?.focus());
+  });
+</script>
+<style>
+  .r__titre { font-size: clamp(32px, 4vw, 48px); letter-spacing: -0.02em; margin-bottom: 8px; }
+  .r__form label { display: block; font-weight: 700; margin-bottom: 8px; }
+  .r__champ { display: flex; gap: 6px; background: #fff; border: 2px solid var(--c-ink); border-radius: var(--radius-pill); padding: 6px 6px 6px 22px; }
+  .r__champ:focus-within { outline: 3px solid var(--c-link); outline-offset: 3px; }
+  .r__champ input { flex: 1; min-width: 0; border: 0; font: inherit; font-size: 17px; background: transparent; }
+  .r__champ input:focus-visible { outline: none; box-shadow: none; }
+  .r__champ button { border: 0; background: var(--c-accent); color: var(--c-accent-ink); font: inherit; font-weight: 700; padding: 12px 22px; border-radius: var(--radius-pill); cursor: pointer; }
+  .r__filtres { display: flex; flex-wrap: wrap; gap: 8px; }
+  .r__filtres :global(button) { font: inherit; font-size: 14.5px; font-weight: 600; min-height: 44px; padding: 8px 16px; border-radius: var(--radius-pill); border: 2px solid var(--c-ink); background: #fff; color: var(--c-text); cursor: pointer; }
+  .r__filtres :global(button[aria-pressed='true']) { background: var(--c-ink); color: #fff; }
+  .r__filtres :global(.r__nb) { font-weight: 400; }
+  .r__etat { font-weight: 600; }
+  .r__liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .r__liste :global(li) { padding: 16px 0; border-bottom: 1px solid var(--c-border); display: flex; flex-direction: column; gap: 4px; }
+  .r__liste :global(a) { font-family: var(--font-title); font-size: 21px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  .r__liste :global(.r__type) { font-size: 13px; font-weight: 700; color: var(--c-text-muted); }
+  .r__liste :global(.r__extrait) { color: var(--c-text-body); }
+  .r__liste :global(mark) { background: color-mix(in srgb, var(--c-accent) 22%, transparent); color: inherit; padding: 0 2px; border-radius: 3px; }
+  .r__plus { align-self: flex-start; }
+  [hidden] { display: none !important; }
+</style>

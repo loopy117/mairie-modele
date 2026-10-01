@@ -8,7 +8,7 @@ const colonnes = options.colonnes ?? 3;
 const visibles = options.visibles ?? 3;
 const Balise = affichage === 'flux' ? 'div' : 'ul';
 ---
-<Balise class:list={['dp', `dp--${affichage}`, options.separateurs === false && 'dp--sans-sep']} style={`--cols:${colonnes};--visibles:${visibles}`} tabindex={affichage === 'slider' ? 0 : undefined}>
+<Balise data-pagefind-ignore="all" class:list={['dp', `dp--${affichage}`, options.separateurs === false && 'dp--sans-sep']} style={`--cols:${colonnes};--visibles:${visibles}`} tabindex={affichage === 'slider' ? 0 : undefined}>
   {elements.map((e) => affichage === 'flux' ? <Carte element={e} /> : <li class="dp__item"><Carte element={e} /></li>)}
 </Balise>
 <style>
