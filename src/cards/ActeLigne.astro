@@ -1,0 +1,20 @@
+---
+import { urlElement } from '../lib/urls';
+import { infosDocument, dateLongue } from '../lib/publication';
+import { TYPES_ACTES } from '../schemas/collections';
+const { element } = Astro.props;
+const d = element.data;
+const doc = infosDocument(d.fichier);
+---
+<article class="al">
+  <p class="al__meta">{(TYPES_ACTES as Record<string, string>)[d.type]}{d.numero && <> n° {d.numero}</>} · <time datetime={new Date(d.date).toISOString().slice(0, 10)}>{dateLongue(d.date)}</time></p>
+  <h3 class="al__titre"><a href={urlElement('actes', element.id)}>{d.titre}</a></h3>
+  {doc && <p class="al__doc"><a href={doc.url} download>Télécharger l'acte <span class="al__taille">(PDF, {doc.taille})</span></a></p>}
+</article>
+<style>
+  .al { display: flex; flex-direction: column; gap: 4px; }
+  .al__meta { font-size: 13px; color: var(--c-text-muted); }
+  .al__titre { font-size: 17px; font-weight: 700; line-height: 1.35; }
+  .al__titre a { color: var(--c-text); }
+  .al__doc { font-size: 14px; } .al__taille { color: var(--c-text-muted); }
+</style>

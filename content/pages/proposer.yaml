@@ -1,0 +1,18 @@
+titre: Proposer un événement
+statut: publie
+seo:
+  titre: Proposer un événement ou une actualité · Saint-Exemple
+  description: "Associations, écoles, commerçants : proposez un événement pour l'agenda de Saint-Exemple, une actualité ou la mise à jour de votre fiche dans l'annuaire."
+sections:
+  - block: hero
+    variant: minimal
+    surtitre: Associations et habitants
+    titre: Proposer un événement ou une actualité
+    texte: "Votre proposition est relue par la mairie avant d'être publiée, en général sous quelques jours."
+  - block: formulaire
+    id: proposition
+    variant: carte
+    formulaire: proposition
+    titre: Votre proposition
+    sujet: Proposition depuis le site de la commune
+    bouton: Envoyer ma proposition

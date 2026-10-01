@@ -1,0 +1,7 @@
+{
+  "actif": true,
+  "niveau": "important",
+  "message": "Travaux sur le réseau d'eau rue des Tilleuls : coupure possible le matin, du lundi au mercredi.",
+  "lien": { "label": "En savoir plus", "href": "/actualites/travaux-reseau-eau-rue-des-tilleuls" },
+  "jusqu_au": "2026-12-31"
+}

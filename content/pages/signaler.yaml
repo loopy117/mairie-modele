@@ -1,0 +1,18 @@
+titre: Signaler un problème
+statut: publie
+seo:
+  titre: Signaler un problème sur la voie publique · Saint-Exemple
+  description: "Lampadaire éteint, trottoir abîmé, dépôt sauvage, branche tombée : signalez-le aux services techniques de Saint-Exemple, photo à l'appui."
+sections:
+  - block: hero
+    variant: minimal
+    surtitre: Signalement
+    titre: Signaler un problème
+    texte: "Les services techniques reçoivent votre signalement et vous tiennent informé. En cas de danger immédiat, appelez le 112."
+  - block: formulaire
+    id: signalement
+    variant: carte
+    formulaire: signalement
+    titre: Votre signalement
+    sujet: Signalement depuis le site de la commune
+    bouton: Envoyer le signalement

@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# Artech paysages — site statique Astro sur hébergement Apache (OVH)
+# ---------------------------------------------------------------------------
+Options -Indexes
+AddDefaultCharset UTF-8
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1. HTTPS obligatoire
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Espace client et éditeur Decap : toujours avec slash final, hors des règles du site statique
+  RewriteRule ^(xmedia-ai|admin)$ /$1/ [R=301,L]
+  RewriteRule ^(xmedia-ai|admin)/ - [L]
+
+  # 2. URL sans slash final : /contact/ → /contact (l'accueil reste /)
+  RewriteCond %{REQUEST_URI} ^/(.+)/$
+  RewriteRule ^ /%1 [L,R=301]
+
+  # 3. /contact sert contact/index.html sans redirection
+  RewriteCond %{REQUEST_URI} !\.[a-z0-9]+$ [NC]
+  RewriteCond %{REQUEST_FILENAME}/index.html -f
+  RewriteRule ^(.+)$ $1/index.html [L]
+
+  # 4. Dossier sans page (ex. /services) : 404 plutôt que 403
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_FILENAME}/index.html !-f
+  RewriteRule ^ - [R=404,L]
+</IfModule>
+
+# Pas de redirection automatique vers /dossier/ (gérée ci-dessus)
+<IfModule mod_dir.c>
+  DirectorySlash Off
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml application/javascript image/svg+xml
+</IfModule>
+
+# Cache : fichiers versionnés (_astro) un an, HTML toujours revalidé
+<IfModule mod_headers.c>
+  <FilesMatch "\.(avif|webp|jpe?g|png|svg|css|js|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(html|xml|txt)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Fichiers sensibles jamais servis
+<FilesMatch "^(\.htpasswd|\.env.*|config.*\.php)$">
+  Require all denied
+</FilesMatch>

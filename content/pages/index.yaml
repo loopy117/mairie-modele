@@ -1,0 +1,71 @@
+titre: Accueil
+statut: publie
+seo:
+  titre: Commune de Saint-Exemple · site officiel
+  description: "Site officiel de Saint-Exemple, commune de démonstration : actualités, agenda, démarches, actes officiels, annuaire et contact de la mairie."
+sections:
+  - block: hero
+    variant: split
+    surtitre: Bienvenue à Saint-Exemple
+    titre: Le site de votre commune
+    texte: "Démarches, actualités, rendez-vous et décisions du conseil municipal : tout ce qui fait la vie de Saint-Exemple, au même endroit."
+    image: { src: /img/commune/illustration-mairie.jpg, alt: "Illustration : la mairie et les maisons du village, au pied des collines" }
+    ctas:
+      - { label: Vos démarches, href: /demarches, style: primaire }
+      - { label: Contacter la mairie, href: /contact, style: secondaire }
+    points:
+      - Mairie ouverte du lundi au vendredi
+      - "Accueil : 04 00 00 00 00"
+
+  - block: features
+    variant: grille-icones
+    surtitre: En un clic
+    titre: Les services les plus demandés
+    items:
+      - { icone: document, titre: Démarches, texte: "Carte d'identité, état civil, urbanisme, inscription sur les listes électorales.", lien: { label: Voir les démarches, href: /demarches } }
+      - { icone: alerte, titre: Signaler un problème, texte: "Lampadaire éteint, trottoir abîmé, dépôt sauvage : prévenez les services techniques.", lien: { label: Faire un signalement, href: /signaler } }
+      - { icone: calendrier, titre: Agenda, texte: Les manifestations de la commune et des associations., lien: { label: Voir l'agenda, href: /agenda } }
+      - { icone: balance, titre: Actes officiels, texte: "Arrêtés, délibérations et procès-verbaux du conseil municipal.", lien: { label: Consulter les actes, href: /actes } }
+
+  - block: boucle
+    background: alt
+    surtitre: Actualités
+    titre: Ce qui se passe à Saint-Exemple
+    source: actualites
+    ordre: date desc
+    nombre: 3
+    carte: actualite-carte
+    affichage: grid
+    options: { colonnes: 3 }
+    lien_tout_voir: { label: Toutes les actualités, href: /actualites }
+
+  - block: boucle
+    surtitre: Agenda
+    titre: Les prochains rendez-vous
+    source: agenda
+    filtre: { date_fin_ou_date: { apres: aujourdhui } }
+    ordre: date asc
+    nombre: 4
+    carte: evenement-carte
+    affichage: liste
+    lien_tout_voir: { label: Tout l'agenda, href: /agenda }
+    si_vide: message
+    message_vide: Aucun rendez-vous à venir pour le moment.
+
+  - block: cta
+    variant: bandeau
+    background: accent
+    titre: Une association, un événement à faire connaître ?
+    texte: "Proposez-le en quelques lignes : après relecture, il paraît dans l'agenda du site."
+    ctas:
+      - { label: Proposer un événement, href: /proposer, style: primaire }
+
+  - block: boucle
+    surtitre: Conseil municipal
+    titre: Derniers actes publiés
+    source: actes
+    ordre: date desc
+    nombre: 3
+    carte: acte-ligne
+    affichage: liste
+    lien_tout_voir: { label: Tous les actes, href: /actes }

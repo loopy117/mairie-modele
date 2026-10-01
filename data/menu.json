@@ -1,0 +1,11 @@
+{
+  "principal": [
+    { "page": "/la-mairie", "label": "La mairie" },
+    { "collection": "actualites", "label": "Actualités" },
+    { "collection": "agenda", "label": "Agenda" },
+    { "collection": "demarches", "label": "Démarches" },
+    { "collection": "annuaire", "label": "Annuaire" },
+    { "collection": "actes", "label": "Actes officiels" }
+  ],
+  "bouton": { "label": "Signaler un problème", "href": "/signaler" }
+}

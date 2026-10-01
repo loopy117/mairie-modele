@@ -1,0 +1,12 @@
+titre: Mentions légales
+statut: publie
+seo:
+  titre: "Mentions légales · Commune de Saint-Exemple"
+  description: "Mentions légales du site de la commune de Saint-Exemple : éditeur, directeur de la publication, création et hébergement, conditions d'utilisation."
+  noindex: true
+sections:
+  - block: hero
+    variant: minimal
+    titre: Mentions légales
+  - block: legal
+    variant: mentions

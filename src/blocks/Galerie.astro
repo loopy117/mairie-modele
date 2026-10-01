@@ -1,0 +1,21 @@
+---
+import Section from '../components/Section.astro';
+import Img from '../components/Img.astro';
+const { variant = 'grille', background, spacing, id, surtitre, titre, intro, images = [] } = Astro.props;
+---
+<Section {background} {spacing} {id} {surtitre} {titre} {intro}>
+  <ul class:list={['gal', `gal--${variant}`]}>
+    {images.map((img: any) => <li><Img image={img} sizes="(min-width: 900px) 33vw, 90vw" largeurs={[480, 800, 1200]} /></li>)}
+  </ul>
+</Section>
+<style>
+  .gal { list-style: none; margin: 0; padding: 0; }
+  .gal :global(img) { width: 100%; border-radius: 14px; object-fit: cover; }
+  .gal--grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 12px; }
+  .gal--grille :global(img) { aspect-ratio: 4 / 3; }
+  .gal--mosaique { columns: 3 240px; column-gap: 12px; }
+  .gal--mosaique li { break-inside: avoid; margin-bottom: 12px; }
+  .gal--carrousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+  .gal--carrousel li { flex: 0 0 min(80%, 520px); scroll-snap-align: start; }
+  .gal--carrousel :global(img) { aspect-ratio: 3 / 2; }
+</style>

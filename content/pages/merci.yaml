@@ -1,0 +1,14 @@
+titre: Message envoyé
+statut: publie
+seo:
+  titre: Message envoyé · Commune de Saint-Exemple
+  description: "Votre message a bien été transmis à la mairie de Saint-Exemple. Le secrétariat ou les services concernés vous répondent dans les meilleurs délais."
+  noindex: true
+fil_ariane: false
+sections:
+  - block: hero
+    variant: minimal
+    titre: Merci, votre message est bien parti
+    texte: La mairie l'a reçu et vous répond dans les meilleurs délais.
+    ctas:
+      - { label: Retour à l'accueil, href: /, style: primaire }

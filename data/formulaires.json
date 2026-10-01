@@ -1,0 +1,35 @@
+{
+  "contact": {
+    "module": "contact",
+    "prestations": ["État civil", "Urbanisme", "Élections", "École et périscolaire", "Location de salle", "Autre question"],
+    "libelles": { "service": "Votre demande concerne", "message": "Votre message" },
+    "champs": ["service", "nom", "email", "telephone", "message"],
+    "obligatoires": ["service", "nom", "email", "message"]
+  },
+  "signalement": {
+    "module": "signalement",
+    "prestations": ["Voirie, trottoir", "Éclairage public", "Propreté, dépôt sauvage", "Espaces verts", "Bâtiment communal", "Autre"],
+    "libelles": { "service": "Type de problème", "message": "Ce que vous avez constaté" },
+    "champs": ["service", "message", "nom", "email", "telephone"],
+    "obligatoires": ["service", "message", "nom"],
+    "precisions_ouvertes": true,
+    "precisions": [
+      { "id": "lieu", "type": "texte", "label": "Où exactement ?", "aide": "Rue, numéro, repère (devant l'école, près de l'arrêt de bus…)" },
+      { "id": "photos", "type": "photos", "label": "Une photo aide les services techniques", "max": 3 }
+    ]
+  },
+  "proposition": {
+    "module": "proposition",
+    "prestations": ["Un événement pour l'agenda", "Une actualité d'association", "Une mise à jour de l'annuaire"],
+    "libelles": { "service": "Vous proposez", "message": "Présentation (quoi, pour qui, prix éventuel)" },
+    "champs": ["service", "nom", "email", "telephone", "message"],
+    "obligatoires": ["service", "nom", "email", "message"],
+    "precisions_ouvertes": true,
+    "precisions": [
+      { "id": "date", "type": "texte", "label": "Date et horaire", "aide": "Par exemple : samedi 14 mars, 14 h – 18 h" },
+      { "id": "lieu", "type": "texte", "label": "Lieu" },
+      { "id": "organisateur", "type": "texte", "label": "Association ou organisateur" },
+      { "id": "photos", "type": "photos", "label": "Affiche ou photo", "max": 2 }
+    ]
+  }
+}

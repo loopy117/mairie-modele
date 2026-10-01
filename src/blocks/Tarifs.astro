@@ -1,0 +1,170 @@
+---
+/**
+ * Grille de prix, alimentée par data/tarifs.json (un seul endroit pour les prix).
+ * Sélecteur d'engagement : boutons radio + CSS (:has), sans JavaScript. Il ne change que le prix de création.
+ */
+import Section from '../components/Section.astro';
+import Icone from '../components/Icone.astro';
+import { tarifs as schema, euros } from '../schemas/tarifs';
+
+const { background, spacing, id, surtitre, titre, intro, creation: voirCreation = true, options: voirOptions = true, cta } = Astro.props;
+const fichiers = import.meta.glob('../../data/tarifs.json', { eager: true, import: 'default' });
+const brut = Object.values(fichiers)[0];
+if (!brut) throw new Error('bloc tarifs : data/tarifs.json absent');
+const t = schema.parse(brut);
+const c = voirCreation ? t.creation : undefined;
+const engagements = c?.engagements.length ? c.engagements : [{ mois: 0, remise: 0 }];
+const uid = `tf-${Math.random().toString(36).slice(2, 8)}`;
+const prixNet = (remise: number) => (c ? c.prix * (1 - remise / 100) : 0);
+const lienFormule = cta?.href ?? '#audit';
+---
+<Section {background} {spacing} {id} {surtitre} {titre} {intro} class="entete-empile">
+  <div class="tf" id={uid}>
+    {c && (
+      <div class="tf__creation">
+        <div class="tf__creation-prix" aria-live="polite">
+          <p class="tf__titre">{c.titre}</p>
+          {engagements.map((e, i) => (
+            <div class={`tf__prix tf__prix--${i}`}>
+              <p class="tf__montant">
+                {c.a_partir_de && <span class="tf__apd">à partir de</span>}
+                {e.remise > 0 && <s class="tf__barre">{euros(c.prix)}</s>}
+                <strong>{euros(prixNet(e.remise))} HT</strong>
+              </p>
+              {c.paiement_3_fois && <p class="tf__trois">Paiement en 3 fois possible : 3 × {euros(prixNet(e.remise) / 3)} HT{e.remise > 0 && ' (arrondi)'}</p>}
+            </div>
+          ))}
+          {c.texte && <p class="tf__texte">{c.texte}</p>}
+        </div>
+        {c.engagements.length > 1 && (
+          <div class="tf__engagement">
+            <fieldset class="tf__duree">
+              <legend>Durée d'engagement</legend>
+              <div class="tf__choix-groupe">
+                {c.engagements.map((e, i) => (
+                  <label class="tf__choix">
+                    <input type="radio" class={`tf__radio tf__radio--${i}`} name={`${uid}-duree`} value={e.mois} checked={i === 0} />
+                    <span>{e.mois} mois{e.remise > 0 && ` · −${e.remise} % sur la création`}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            {c.note_engagement && <p class="tf__note">{c.note_engagement}</p>}
+          </div>
+        )}
+      </div>
+    )}
+
+    <ul class="tf__formules" role="list">
+      {t.formules.map((f) => (
+        <li class:list={['tf__formule', f.mis_en_avant && 'tf__formule--avant']}>
+          <div class="tf__entete">
+            <div class="tf__nom-ligne">
+              <h3 class="tf__nom">{f.nom}</h3>
+              {f.badge && <span class="tf__badge">{f.badge}</span>}
+            </div>
+            {f.accroche && <p class="tf__accroche">{f.accroche}</p>}
+          </div>
+          <p class="tf__mensuel"><strong>{euros(f.prix_mois)}</strong> <span>HT / mois</span></p>
+          <ul class="tf__inclus" role="list">
+            {f.inclus_intro && <li class="tf__intro">{f.inclus_intro}</li>}
+            {f.inclus.map((x) => <li>{x}</li>)}
+          </ul>
+          {f.demandes && <p class="tf__demandes">{f.demandes}</p>}
+          <a class:list={['btn', f.mis_en_avant ? 'btn--primaire' : 'btn--secondaire', 'tf__cta']} href={lienFormule}>{f.bouton ?? `Choisir ${f.nom}`}</a>
+        </li>
+      ))}
+    </ul>
+
+    {voirOptions && t.options.length > 0 && (
+      <div class="tf__options">
+        <div class="tf__options-entete">
+          <h3 class="tf__titre-options">{t.options_titre}</h3>
+          {t.options_intro && <p class="tf__options-intro">{t.options_intro}</p>}
+        </div>
+        <ul class="tf__liste-options" role="list">
+          {t.options.map((o) => (
+            <li class="tf__option">
+              {o.icone && <Icone nom={o.icone} taille={28} class="tf__option-icone" />}
+              <span class="tf__option-nom">{o.nom}{o.bientot && <span class="tf__bientot">Bientôt</span>}</span>
+              {o.texte && <span class="tf__option-texte">{o.texte}</span>}
+              {o.prix && !o.bientot && <span class="tf__option-prix">{o.prix}</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {t.mention && <p class="tf__mention">{t.mention}</p>}
+  </div>
+</Section>
+
+<style>
+  .tf { display: flex; flex-direction: column; gap: clamp(32px, 4vw, 56px); }
+
+  /* Création */
+  .tf__creation { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 24px 48px; align-items: center; padding: clamp(24px, 3vw, 36px) clamp(24px, 3vw, 40px); border-radius: 24px; background: var(--c-surface-alt); border: 1px solid var(--c-border); }
+  .tf__creation-prix { display: flex; flex-direction: column; gap: 10px; }
+  .tf__titre { font-size: var(--fs-base); font-weight: 600; color: var(--c-text-body); }
+  .tf__texte { font-size: var(--fs-base); color: var(--c-text-body); }
+  .tf__prix { display: none; flex-direction: column; gap: 10px; }
+  .tf__prix--0 { display: flex; }
+  @supports selector(:has(a)) {
+    .tf__creation:has(.tf__radio:checked) .tf__prix { display: none; }
+    .tf__creation:has(.tf__radio--0:checked) .tf__prix--0,
+    .tf__creation:has(.tf__radio--1:checked) .tf__prix--1,
+    .tf__creation:has(.tf__radio--2:checked) .tf__prix--2,
+    .tf__creation:has(.tf__radio--3:checked) .tf__prix--3 { display: flex; }
+  }
+  .tf__montant { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .tf__apd { font-size: var(--fs-base); color: var(--c-text-muted); }
+  .tf__barre { font-size: 22px; color: var(--c-text-muted); }
+  .tf__montant strong { font-size: clamp(34px, 3.2vw, 44px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; color: var(--c-ink, var(--c-text)); }
+  .tf__trois { font-size: var(--fs-base); color: var(--c-text-body); }
+  .tf__engagement { display: flex; flex-direction: column; gap: 14px; align-items: flex-end; }
+  @media (max-width: 860px) { .tf__engagement { align-items: flex-start; } }
+  .tf__duree { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; align-items: inherit; min-width: 0; }
+  .tf__duree legend { float: left; width: 100%; text-align: inherit; font-size: var(--fs-base); font-weight: 600; color: var(--c-text-body); margin-bottom: 14px; }
+  .tf__engagement .tf__duree legend { text-align: right; }
+  @media (max-width: 860px) { .tf__engagement .tf__duree legend { text-align: left; } }
+  .tf__choix-groupe { clear: both; display: inline-flex; flex-wrap: wrap; padding: 5px; border-radius: 26px; background: var(--c-surface); border: 1px solid var(--c-border); }
+  .tf__choix { position: relative; cursor: pointer; }
+  .tf__choix input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .tf__choix span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 99px; font-size: 15px; font-weight: 600; color: var(--c-ink, var(--c-text)); transition: background .15s, color .15s; }
+  .tf__choix input:checked + span { background: var(--c-primary); color: #fff; }
+  .tf__choix input:focus-visible + span { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+  .tf__note { font-size: 14px; color: var(--c-text-muted); }
+
+  /* Formules */
+  .tf__formules { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 24px; align-items: stretch; }
+  .tf__formule { display: flex; flex-direction: column; gap: 26px; padding: clamp(28px, 3vw, 40px) clamp(24px, 2.5vw, 36px); border-radius: 24px; background: var(--c-surface); border: 1px solid var(--c-border); }
+  .tf__entete { display: flex; flex-direction: column; gap: 8px; }
+  .tf__nom-ligne { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .tf__nom { font-family: var(--font-title); font-size: 30px; font-weight: 500; color: var(--c-ink, var(--c-text)); }
+  .tf__badge { padding: 6px 12px; border-radius: 99px; border: 1.5px solid #fff; color: #fff; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; }
+  .tf__accroche { font-size: 18px; font-weight: 600; color: var(--c-ink, var(--c-text)); }
+  .tf__mensuel { font-size: 34px; font-weight: 600; color: var(--c-ink, var(--c-text)); }
+  .tf__mensuel span { font-size: 16px; font-weight: 400; color: var(--c-text-muted); }
+  .tf__inclus { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; font-size: var(--fs-md); line-height: 1.45; color: var(--c-ink, var(--c-text)); }
+  .tf__demandes { font-size: 14px; color: var(--c-text-muted); padding-top: 14px; border-top: 1px solid var(--c-border); }
+  .tf__cta { margin-top: auto; min-height: 52px; width: 100%; }
+  .tf__formule .btn--secondaire { font-weight: 600; }
+  .tf__formule--avant { background: var(--c-primary); border-color: var(--c-primary); }
+  .tf__formule--avant .tf__nom, .tf__formule--avant .tf__accroche, .tf__formule--avant .tf__mensuel, .tf__formule--avant .tf__inclus { color: #fff; }
+  .tf__formule--avant .tf__mensuel span, .tf__formule--avant .tf__demandes { color: var(--c-on-dark-body); }
+  .tf__formule--avant .tf__demandes { border-color: #4F8497; }
+
+  /* Options */
+  .tf__options { display: flex; flex-direction: column; gap: 24px; padding-top: 16px; }
+  .tf__options-entete { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 24px; }
+  .tf__titre-options { font-size: clamp(26px, 2.4vw, 34px); font-weight: 500; }
+  .tf__options-intro { font-size: 15px; color: var(--c-text-muted); }
+  .tf__liste-options { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 20px; }
+  .tf__option { display: flex; flex-direction: column; gap: 12px; padding: 28px; border-radius: 20px; background: var(--c-surface); border: 1px solid var(--c-border); }
+  .tf__option :global(.tf__option-icone) { color: var(--c-primary); }
+  .tf__option-nom { font-size: 19px; font-weight: 600; color: var(--c-ink, var(--c-text)); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tf__option-texte { font-size: 16px; line-height: 1.5; color: var(--c-text-body); }
+  .tf__option-prix { margin-top: auto; font-size: 17px; font-weight: 600; color: var(--c-ink, var(--c-text)); }
+  .tf__bientot { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--c-surface-alt); color: var(--c-primary); }
+  .tf__mention { font-size: 14px; color: var(--c-text-muted); }
+</style>

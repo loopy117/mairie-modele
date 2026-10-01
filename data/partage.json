@@ -1,0 +1,18 @@
+{
+  "fond": "#F1F4F8",
+  "fond2": "#FFFFFF",
+  "texte": "#14263F",
+  "secondaire": "#555F6E",
+  "accent": "#2B6B4B",
+  "police_titre": "@fontsource/bitter/files/bitter-latin-700-normal.woff",
+  "police_texte": "@fontsource/figtree/files/figtree-latin-600-normal.woff",
+  "logo": "data/partage/logo.svg",
+  "logo_x": 80,
+  "logo_y": 64,
+  "logo_hauteur": 84,
+  "decor": "data/partage/decor.svg",
+  "titre_accueil": "Le site de la commune de Saint-Exemple",
+  "fond_app": "#1E3A64",
+  "marge_app": 0,
+  "favicon_svg": true
+}

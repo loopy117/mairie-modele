@@ -1,0 +1,172 @@
+# Déploiement du site par rsync (SSH) vers le serveur xmediacreation (VPS).
+#  - push sur main          → production (dossier DOSSIER_PRODUCTION)
+#  - push sur une branche ia/… → recette (dossier DOSSIER_RECETTE), si la variable existe
+#  - push sur une branche cms/… (modification en attente dans l'éditeur) → aperçu (DOSSIER_APERCU, URL_APERCU),
+#    réservé aux comptes de l'espace client, avec correction des textes sur la page (scripts/apercu.ts)
+#  - lancement manuel possible depuis l'onglet Actions ; reconstruction chaque nuit (agenda, alerte)
+# Réglages : Settings → Secrets and variables → Actions (voir DEPLOIEMENT.md)
+name: Déploiement
+
+on:
+  push:
+    branches: [main, 'ia/**', 'cms/**']
+  workflow_dispatch:
+  # Chaque nuit : l'agenda ne garde que les rendez-vous à venir, l'alerte expirée disparaît du HTML
+  schedule:
+    - cron: '7 3 * * *'
+
+concurrency:
+  # Un seul aperçu par site : la dernière modification enregistrée l'emporte
+  group: ${{ startsWith(github.ref, 'refs/heads/cms/') && 'apercu' || format('deploiement-{0}', github.ref) }}
+  cancel-in-progress: true
+
+jobs:
+  construire-et-deployer:
+    # Branche de l'éditeur sans aperçu configuré : rien à construire
+    if: ${{ !startsWith(github.ref, 'refs/heads/cms/') || vars.DOSSIER_APERCU != '' }}
+    runs-on: ubuntu-latest
+    env:
+      CIBLE: ${{ github.ref == 'refs/heads/main' && 'production' || (startsWith(github.ref, 'refs/heads/cms/') && 'apercu' || 'recette') }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # historique complet : date de mise en ligne des actes (src/lib/publication.ts)
+
+      # Aperçu : code du site tel qu'il est sur main (composants, scripts à jour), avec seulement les contenus que
+      # la modification a changés (une branche de l'éditeur garde sinon le code du jour où elle a été créée)
+      - name: Aperçu — code de main, contenus de la modification
+        if: env.CIBLE == 'apercu'
+        run: |
+          git fetch -q origin main
+          BRANCHE=$(git rev-parse HEAD)
+          BASE=$(git merge-base origin/main "$BRANCHE")
+          git diff -z --name-only --diff-filter=AMR "$BASE" "$BRANCHE" -- content media data > modifies.lst
+          git diff -z --name-only --diff-filter=D "$BASE" "$BRANCHE" -- content media data > supprimes.lst
+          git -c advice.detachedHead=false checkout -q origin/main
+          [ -s modifies.lst ] && xargs -0 git checkout "$BRANCHE" -- < modifies.lst
+          [ -s supprimes.lst ] && xargs -0 git rm -q --ignore-unmatch -- < supprimes.lst
+          echo "Contenus de la modification : $(tr '\0' '\n' < modifies.lst | wc -l) fichier(s) modifié(s), $(tr '\0' '\n' < supprimes.lst | wc -l) supprimé(s)"
+          rm -f modifies.lst supprimes.lst
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Choisir la destination
+        id: dest
+        run: |
+          if [ "$CIBLE" = "production" ]; then
+            echo "dossier=${{ vars.DOSSIER_PRODUCTION }}" >> "$GITHUB_OUTPUT"
+            echo "url=${{ vars.URL_PRODUCTION }}" >> "$GITHUB_OUTPUT"
+            echo "noindex=${{ vars.NOINDEX_PRODUCTION || '0' }}" >> "$GITHUB_OUTPUT"
+          elif [ "$CIBLE" = "apercu" ]; then
+            echo "dossier=${{ vars.DOSSIER_APERCU }}" >> "$GITHUB_OUTPUT"
+            echo "url=${{ vars.URL_APERCU }}" >> "$GITHUB_OUTPUT"
+            echo "noindex=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "dossier=${{ vars.DOSSIER_RECETTE }}" >> "$GITHUB_OUTPUT"
+            echo "url=${{ vars.URL_RECETTE }}" >> "$GITHUB_OUTPUT"
+            echo "noindex=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Arrêter si la recette n'est pas configurée
+        if: env.CIBLE == 'recette' && steps.dest.outputs.dossier == ''
+        run: echo "::notice::Pas de DOSSIER_RECETTE défini — build seulement, aucun envoi."
+
+      - run: npm ci
+
+      # Espace client, formulaire et connexion de l'éditeur : code commun du serveur
+      # xmediacreation (/opt/xmedia-commun, dépôt xmedia-serveur), plus rien à installer ici.
+
+      - name: Valider et construire
+        run: npm run build
+        env:
+          SITE_URL: ${{ steps.dest.outputs.url }}
+          NOINDEX: ${{ steps.dest.outputs.noindex }}
+          INDEXNOW_CLE: ${{ vars.INDEXNOW_CLE }}
+          GOOGLE_MAPS_CLE: ${{ vars.GOOGLE_MAPS_CLE }}
+
+      - name: Préparer l'aperçu (textes corrigeables sur la page)
+        if: env.CIBLE == 'apercu'
+        run: npx tsx scripts/apercu.ts
+        env:
+          APERCU: '1'
+          APERCU_BRANCHE: ${{ github.ref_name }}
+
+      - name: Préparer la clé SSH
+        if: steps.dest.outputs.dossier != ''
+        run: |
+          install -m 700 -d ~/.ssh
+          # tr -d '\r' : retire les fins de ligne Windows d'un copier-coller
+          printf '%s\n' "${{ secrets.SSH_CLE_PRIVEE }}" | tr -d '\r' > ~/.ssh/deploiement
+          chmod 600 ~/.ssh/deploiement
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" | tr -d '\r' > ~/.ssh/known_hosts
+          [ -n "${{ vars.SSH_HOTE }}" ] || { echo "::error::Variable SSH_HOTE manquante (Repository variables)"; exit 1; }
+          [ -n "${{ vars.SSH_UTILISATEUR }}" ] || { echo "::error::Variable SSH_UTILISATEUR manquante (Repository variables)"; exit 1; }
+          grep -q "BEGIN OPENSSH PRIVATE KEY" ~/.ssh/deploiement || { echo "::error::SSH_CLE_PRIVEE vide ou incomplète : coller tout la clé privée de déploiement, lignes BEGIN/END comprises"; exit 1; }
+          ssh-keygen -y -f ~/.ssh/deploiement > /dev/null || { echo "::error::SSH_CLE_PRIVEE illisible : recopier la clé privée de déploiement (pas la clé publique)"; exit 1; }
+          [ -s ~/.ssh/known_hosts ] || { echo "::error::SSH_KNOWN_HOSTS vide : coller la sortie de ssh-keyscan"; exit 1; }
+
+      - name: Tester la connexion SSH
+        if: steps.dest.outputs.dossier != ''
+        run: |
+          # rsync --list-only plutôt qu'une commande shell : fonctionne aussi avec une clé
+          # limitée à rsync (serveur xmediacreation, rrsync)
+          if rsync --list-only -e "ssh -i ~/.ssh/deploiement -p ${{ vars.SSH_PORT || '22' }} -o BatchMode=yes -o ConnectTimeout=20" \
+               "${{ vars.SSH_UTILISATEUR }}@${{ vars.SSH_HOTE }}:${{ steps.dest.outputs.dossier }}/" > /dev/null 2> ssh.err; then
+            echo "Connexion SSH et dossier ${{ steps.dest.outputs.dossier }} : OK"
+          else
+            cat ssh.err
+            if grep -q "Host key verification failed" ssh.err; then echo "::error::Empreinte du serveur refusée : refaire ssh-keyscan et mettre à jour SSH_KNOWN_HOSTS"
+            elif grep -q "Permission denied (publickey" ssh.err; then echo "::error::Clé refusée par le serveur : la clé publique de déploiement n est pas autorisée pour le compte ${{ vars.SSH_UTILISATEUR }}"
+            elif grep -qi "timed out\|Could not resolve\|Connection refused" ssh.err; then echo "::error::Serveur injoignable : vérifier SSH_HOTE et SSH_PORT"
+            else echo "::error::Connexion OK mais dossier '${{ steps.dest.outputs.dossier }}' introuvable dans le compte, ou erreur SSH ci-dessus"; fi
+            exit 1
+          fi
+
+      - name: Relever les pages en ligne (IndexNow)
+        if: env.CIBLE == 'production' && steps.dest.outputs.dossier != '' && steps.dest.outputs.noindex != '1'
+        run: curl -sSfL "${{ steps.dest.outputs.url }}/indexnow-empreintes.json?v=$GITHUB_RUN_ID" -o indexnow-ancien.json || rm -f indexnow-ancien.json
+
+      - name: Envoyer sur le serveur
+        if: steps.dest.outputs.dossier != ''
+        env:
+          DOSSIER: ${{ steps.dest.outputs.dossier }}
+        run: |
+          # Garde-fou : le dossier doit être un nom simple, jamais la racine du compte.
+          case "$DOSSIER" in ""|"/"|"."|".."|*" "*|/*|*..*) echo "DOSSIER invalide : '$DOSSIER'"; exit 1;; esac
+          rsync -rlz --delete --checksum \
+            --exclude '.htpasswd' --exclude '.ovhconfig' --exclude 'config*.php' \
+            -e "ssh -i ~/.ssh/deploiement -p ${{ vars.SSH_PORT || '22' }} -o BatchMode=yes" \
+            dist/ "${{ vars.SSH_UTILISATEUR }}@${{ vars.SSH_HOTE }}:${DOSSIER}/"
+
+      - name: Résumé
+        if: steps.dest.outputs.dossier != '' && env.CIBLE != 'apercu'
+        run: |
+          echo "### Déployé en ${CIBLE} → ${{ steps.dest.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+          # L'adresse déclarée doit être l'adresse finale : elle sert aux liens canoniques, au sitemap et aux données structurées
+          FINALE=$(curl -sS -L -o /dev/null -w '%{url_effective}' "${{ steps.dest.outputs.url }}/" || true)
+          if [ -n "$FINALE" ] && [ "${FINALE%/}" != "${{ steps.dest.outputs.url }}" ]; then
+            echo "::warning::${{ steps.dest.outputs.url }} redirige vers ${FINALE%/} : mettre cette adresse dans la variable URL_${CIBLE^^} (liens canoniques et sitemap)"
+          fi
+
+      - name: Prévenir Bing et les autres moteurs (IndexNow)
+        if: env.CIBLE == 'production' && steps.dest.outputs.dossier != '' && steps.dest.outputs.noindex != '1'
+        continue-on-error: true
+        run: node scripts/indexnow.mjs envoyer indexnow-ancien.json
+        env:
+          SITE_URL: ${{ steps.dest.outputs.url }}
+          NOINDEX: ${{ steps.dest.outputs.noindex }}
+          INDEXNOW_CLE: ${{ vars.INDEXNOW_CLE }}
+
+      - name: Prévenir l'espace client (demandes mises en ligne)
+        if: env.CIBLE == 'production' && steps.dest.outputs.dossier != ''
+        env:
+          SECRET: ${{ secrets.XMEDIA_AI_SECRET }}
+        run: |
+          [ -n "$SECRET" ] || { echo "Espace client non configuré"; exit 0; }
+          sleep 5
+          CORPS=$(jq -cn --arg sha "$GITHUB_SHA" '{type:"deploye", sha:$sha}')
+          SIG=$(printf '%s' "$CORPS" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')
+          curl -sS -L --post301 --post302 -X POST "${{ steps.dest.outputs.url }}/xmedia-ai/webhook.php" -H 'Content-Type: application/json' -H "X-Xmedia-Signature: sha256=$SIG" -d "$CORPS" || true

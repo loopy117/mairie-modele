@@ -1,0 +1,22 @@
+---
+/** Mentions légales ou politique de confidentialité, générées depuis data/site.json (lib/legal.ts). */
+import { readFileSync } from 'node:fs';
+import Section from '../components/Section.astro';
+import Markdown from '../components/Markdown.astro';
+import siteBrut from '../../data/site.json';
+import type { Site } from '../schemas/site';
+import { indexSite } from '../lib/site';
+import { mentionsLegales, politiqueConfidentialite, declarationAccessibilite } from '../lib/legal';
+const site = siteBrut as unknown as Site;
+const { variant = 'mentions', background, spacing, id, surtitre, titre, intro, complement } = Astro.props;
+const confidentialite = (await indexSite()).get('/confidentialite')?.publie ? '/confidentialite' : null;
+// Polices chargées depuis Google Fonts : à signaler tant que le site ne les héberge pas lui-même
+const googleFonts = readFileSync('src/layouts/Base.astro', 'utf8').includes('fonts.googleapis.com')
+  ? "Les polices de caractères du site sont fournies par Google Fonts : pour les afficher, votre navigateur se connecte aux serveurs de Google, qui reçoivent votre adresse IP."
+  : null;
+const source = (variant === 'confidentialite' ? politiqueConfidentialite(site, googleFonts) : variant === 'accessibilite' ? declarationAccessibilite(site, '/plan-du-site') : mentionsLegales(site, confidentialite))
+  + (complement ? `\n\n${complement}` : '');
+---
+<Section {background} {spacing} {id} {surtitre} {titre} {intro} largeur="etroite">
+  <Markdown source={source} lier={false} />
+</Section>

@@ -1,0 +1,131 @@
+---
+/**
+ * Route unique : génère toutes les pages du site à partir du contenu.
+ * Aucune page n'est écrite à la main (spec §2).
+ *  - content/pages/**.yaml         → pages composées de sections
+ *  - content/<collection>/*.md      → pages de détail
+ *  - archives paginées et par catégorie
+ */
+import { getCollection, getEntry } from 'astro:content';
+import Markdown from '../components/Markdown.astro';
+import Base from '../layouts/Base.astro';
+import Sections from '../components/Sections.astro';
+import Section from '../components/Section.astro';
+import Disposition from '../dispositions/Disposition.astro';
+import { gabaritDetail } from '../layouts/details';
+import { reglages } from '../lib/collections';
+import { urlPage, urlElement, urlArchive, urlCategorie } from '../lib/urls';
+import { executer, estPublie } from '../lib/requete';
+import { nomsCollections } from '../schemas/collections';
+import taxonomies from '../../data/taxonomies.json';
+import siteBrut from '../../data/site.json';
+import type { Site } from '../schemas/site';
+import FicheInfos from '../components/FicheInfos.astro';
+
+export async function getStaticPaths() {
+  const chemins: any[] = [];
+  const sansSlash = (u: string) => (u === '/' ? undefined : u.slice(1));
+
+  for (const p of await getCollection('pages')) {
+    if (p.data.statut !== 'publie') continue;
+    chemins.push({ params: { chemin: sansSlash(urlPage(p.id)) }, props: { type: 'page', id: p.id } });
+  }
+  for (const nom of nomsCollections) {
+    const r = reglages[nom];
+    const tous = (await getCollection(nom as any)).map((e: any) => ({ id: e.id, data: e.data }));
+    const publies = tous.filter((e) => estPublie(e));
+    if (r.detail) for (const e of publies) chemins.push({ params: { chemin: sansSlash(urlElement(nom, e.id)) }, props: { type: 'detail', collection: nom, id: e.id } });
+    if (r.archive && publies.length) {   // pas d'archive vide
+      const a = r.archive;
+      const paginer = (liste: any[], url: (n: number) => string, titre: string, categorie?: string) => {
+        const pages = Math.max(1, Math.ceil(liste.length / a.parPage));
+        for (let n = 1; n <= pages; n++) {
+          chemins.push({ params: { chemin: sansSlash(url(n)) }, props: { type: 'archive', collection: nom, titre, categorie, page: n, pages, ids: liste.slice((n - 1) * a.parPage, n * a.parPage).map((e) => e.id) } });
+        }
+      };
+      const tries = executer(tous, { ordre: a.ordre, filtre: a.filtre }, { tout: true });
+      paginer(tries, (n) => urlArchive(nom, n), a.titre);
+      if (a.parCategorie) {
+        for (const [slug, libelle] of Object.entries(taxonomies.metiers)) {
+          const liste = tries.filter((e) => e.data.categorie === slug);
+          if (liste.length) paginer(liste, (n) => urlCategorie(nom, slug, n), `${a.titre} · ${libelle}`, slug);
+        }
+      }
+    }
+  }
+  return chemins;
+}
+
+const props = Astro.props as any;
+const url = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+{props.type === 'page' && await (async () => {
+  const p = (await getEntry('pages', props.id))!;
+  return (
+    <Base titre={p.data.titre} seo={p.data.seo} url={url} gabarit={p.data.gabarit} filAriane={p.data.fil_ariane ?? url !== '/'}>
+      <Sections sections={p.data.sections} />
+    </Base>
+  );
+})()}
+
+{props.type === 'detail' && await (async () => {
+  const entree: any = (await getEntry(props.collection, props.id))!;
+  const courant = { id: entree.id, data: entree.data };
+  const { avant, apres } = gabaritDetail(props.collection, courant);
+  const aCorps = !!entree.body?.trim();
+  // Données structurées : un Event pour chaque date de l'agenda
+  const base = Astro.site?.href.replace(/\/$/, '') ?? (siteBrut as any).url;
+  const jsonld = props.collection === 'agenda'
+    ? [{ '@context': 'https://schema.org', '@type': 'Event', name: entree.data.titre, startDate: new Date(entree.data.date).toISOString().slice(0, 10),
+        ...(entree.data.date_fin ? { endDate: new Date(entree.data.date_fin).toISOString().slice(0, 10) } : {}), url: base + url,
+        location: { '@type': 'Place', name: entree.data.lieu, address: { '@type': 'PostalAddress', addressLocality: (siteBrut as any).adresse?.ville, postalCode: (siteBrut as any).adresse?.code_postal, addressCountry: 'FR' } },
+        ...(entree.data.resume ? { description: entree.data.resume } : {}), ...(entree.data.organisateur ? { organizer: { '@type': 'Organization', name: entree.data.organisateur } } : {}),
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode', eventStatus: 'https://schema.org/EventScheduled' }]
+    : [];
+  return (
+    <Base titre={entree.data.titre} seo={{ ...entree.data.seo, description: entree.data.seo?.description ?? entree.data.resume }} url={url} jsonld={jsonld}>
+      <Sections sections={avant} courant={courant} />
+      <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />
+      {aCorps && <Section largeur="etroite"><Markdown source={entree.body} /></Section>}
+      {entree.data.sections && <Sections sections={entree.data.sections} courant={courant} />}
+      <Sections sections={apres} courant={courant} />
+    </Base>
+  );
+})()}
+
+{props.type === 'archive' && await (async () => {
+  const r = reglages[props.collection as keyof typeof reglages];
+  const a = r.archive!;
+  const tous = (await getCollection(props.collection)).map((e: any) => ({ id: e.id, data: e.data }));
+  const elements = props.ids.map((id: string) => tous.find((e) => e.id === id));
+  const cats = a.parCategorie ? Object.entries(taxonomies.metiers).filter(([s]) => tous.some((e) => e.data.categorie === s && estPublie(e))) : [];
+  const urlN = (n: number) => (props.categorie ? urlCategorie(props.collection, props.categorie, n) : urlArchive(props.collection, n));
+  return (
+    <Base titre={props.titre + (props.page > 1 ? ` — page ${props.page}` : '')} seo={{ description: a.intro }} url={url} typePage="CollectionPage">
+      <Sections sections={[{ block: 'hero', variant: 'minimal', titre: props.titre, texte: a.intro }]} />
+      <Section>
+        {cats.length > 1 && (
+          <nav class="filtres" aria-label="Filtrer par thème">
+            <a href={urlArchive(props.collection)} aria-current={!props.categorie ? 'page' : undefined}>Tous</a>
+            {cats.map(([s, l]) => <a href={urlCategorie(props.collection, s)} aria-current={props.categorie === s ? 'page' : undefined}>{l}</a>)}
+          </nav>
+        )}
+        <h2 class="visually-hidden">Liste : {props.titre}</h2>
+        {elements.length
+          ? <Disposition elements={elements} carte={a.carte} affichage={a.affichage} options={a.options} />
+          : <p class="vide">{props.collection === 'agenda' ? 'Aucun rendez-vous à venir pour le moment : revenez bientôt.' : 'Rien pour le moment.'}</p>}
+        {props.pages > 1 && (
+          <nav class="pagination" aria-label="Pagination">
+            {Array.from({ length: props.pages }, (_, i) => i + 1).map((n) => <a href={urlN(n)} aria-current={n === props.page ? 'page' : undefined}>{n}</a>)}
+          </nav>
+        )}
+      </Section>
+    </Base>
+  );
+})()}
+
+<style>
+  .filtres, .pagination { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filtres a, .pagination a { padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid var(--c-border); color: var(--c-text); font-size: var(--fs-base); }
+  .filtres a[aria-current], .pagination a[aria-current] { background: var(--c-ink); border-color: var(--c-ink); color: #fff; }
+</style>

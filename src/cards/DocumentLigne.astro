@@ -1,0 +1,22 @@
+---
+import { urlElement } from '../lib/urls';
+import { infosDocument, dateLongue } from '../lib/publication';
+import taxonomies from '../../data/taxonomies.json';
+const { element } = Astro.props;
+const d = element.data;
+const doc = infosDocument(d.fichier);
+const theme = (taxonomies.metiers as Record<string, string>)[d.categorie];
+---
+<article class="dl">
+  <div>
+    <h3 class="dl__titre"><a href={urlElement('documents', element.id)}>{d.titre}</a></h3>
+    <p class="dl__meta"><time datetime={new Date(d.date).toISOString().slice(0, 10)}>{dateLongue(d.date)}</time>{theme && <> · {theme}</>}</p>
+  </div>
+  {doc && <a class="dl__pdf" href={doc.url} download>PDF · {doc.taille}<span class="visually-hidden"> : {d.titre}</span></a>}
+</article>
+<style>
+  .dl { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .dl__titre { font-size: 17px; font-weight: 700; line-height: 1.35; } .dl__titre a { color: var(--c-text); }
+  .dl__meta { font-size: 13px; color: var(--c-text-muted); margin-top: 2px; }
+  .dl__pdf { flex: none; font-size: 14px; font-weight: 600; padding: 8px 14px; border: 1px solid var(--c-border); border-radius: var(--radius-pill); }
+</style>

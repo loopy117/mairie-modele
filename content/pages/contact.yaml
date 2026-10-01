@@ -1,0 +1,17 @@
+titre: Contact
+statut: publie
+seo:
+  titre: Contacter la mairie de Saint-Exemple
+  description: "Écrire à la mairie de Saint-Exemple : état civil, urbanisme, élections, écoles, location de salle. Horaires d'ouverture et coordonnées de l'accueil."
+sections:
+  - block: hero
+    variant: minimal
+    surtitre: Contact
+    titre: Écrire à la mairie
+    texte: "Votre message arrive directement au secrétariat de mairie, qui vous répond dans les meilleurs délais."
+  - block: formulaire
+    id: contact
+    variant: avec-coordonnees
+    formulaire: contact
+    sujet: Message depuis le site de la commune
+    bouton: Envoyer mon message

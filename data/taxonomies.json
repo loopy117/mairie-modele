@@ -1,0 +1,13 @@
+{
+  "metiers": {
+    "vie-municipale": "Vie municipale",
+    "travaux-urbanisme": "Travaux et urbanisme",
+    "enfance-jeunesse": "Enfance et jeunesse",
+    "culture-loisirs": "Culture, sport et loisirs",
+    "environnement": "Environnement et cadre de vie",
+    "solidarite": "Solidarité et santé",
+    "securite": "Sécurité et prévention",
+    "etat-civil": "État civil et citoyenneté"
+  },
+  "tags": {}
+}

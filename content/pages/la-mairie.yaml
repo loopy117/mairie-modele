@@ -1,0 +1,46 @@
+titre: La mairie
+statut: publie
+seo:
+  titre: La mairie de Saint-Exemple · horaires et élus
+  description: "Horaires d'ouverture, adresse et contact de la mairie de Saint-Exemple, le conseil municipal et ses commissions, les services communaux."
+sections:
+  - block: hero
+    variant: minimal
+    surtitre: La mairie
+    titre: Votre mairie, à votre service
+    texte: "L'accueil vous reçoit pour l'état civil, l'urbanisme, les élections et toutes vos questions sur la vie de la commune."
+
+  - block: texte
+    variant: deux-colonnes
+    titre: Horaires et accès
+    contenu: |
+      **Mairie de Saint-Exemple**
+      1 place de la Mairie, 00000 Saint-Exemple
+
+      **Horaires d'ouverture**
+      Lundi, mardi, jeudi et vendredi : 8 h 30 – 12 h
+      Mercredi : 14 h – 18 h
+
+      **Téléphone** : 04 00 00 00 00
+      **E-mail** : [mairie@saint-exemple.fr](mailto:mairie@saint-exemple.fr)
+
+      Le bâtiment est accessible aux personnes à mobilité réduite (entrée par la rampe, côté parking).
+
+  - block: features
+    variant: grille-icones
+    background: alt
+    surtitre: Le conseil municipal
+    titre: Vos élus
+    intro: "Le conseil municipal se réunit en séance publique environ une fois par mois. Les dates sont annoncées dans l'agenda."
+    items:
+      - { icone: personnes, titre: Le maire, texte: "Nom du maire (exemple) — reçoit sur rendez-vous." }
+      - { icone: maison, titre: "1er adjoint · Travaux et urbanisme", texte: "Nom de l'élu (exemple)" }
+      - { icone: personnes, titre: "2e adjointe · Écoles et jeunesse", texte: "Nom de l'élu (exemple)" }
+      - { icone: calendrier, titre: "3e adjoint · Associations et culture", texte: "Nom de l'élu (exemple)" }
+
+  - block: cta
+    variant: carte
+    titre: Une question ?
+    texte: "Écrivez à la mairie : la demande arrive directement au secrétariat, qui vous répond dans les meilleurs délais."
+    ctas:
+      - { label: Contacter la mairie, href: /contact, style: primaire }

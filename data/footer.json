@@ -1,0 +1,26 @@
+{
+  "colonnes": [
+    {
+      "titre": "Vivre à Saint-Exemple",
+      "liens": [
+        { "collection": "actualites", "label": "Actualités" },
+        { "collection": "agenda", "label": "Agenda" },
+        { "collection": "annuaire", "label": "Annuaire" },
+        { "collection": "documents", "label": "Documents" }
+      ]
+    },
+    {
+      "titre": "Participer",
+      "liens": [
+        { "page": "/signaler", "label": "Signaler un problème" },
+        { "page": "/proposer", "label": "Proposer un événement" },
+        { "page": "/contact", "label": "Contacter la mairie" }
+      ]
+    }
+  ],
+  "legal": [
+    { "page": "/mentions-legales" },
+    { "page": "/confidentialite" },
+    { "page": "/accessibilite" }
+  ]
+}

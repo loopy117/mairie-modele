@@ -1,0 +1,12 @@
+titre: Confidentialité
+statut: publie
+seo:
+  titre: "Politique de confidentialité · Commune de Saint-Exemple"
+  description: "Politique de confidentialité de la commune de Saint-Exemple : données reçues par le formulaire, durée de conservation, cookies et vos droits."
+  noindex: true
+sections:
+  - block: hero
+    variant: minimal
+    titre: Politique de confidentialité
+  - block: legal
+    variant: confidentialite

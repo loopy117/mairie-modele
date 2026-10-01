@@ -1,0 +1,185 @@
+# Réalisation d'une demande de l'espace client xmedia·ai.
+# Déclenché par le site (repository_dispatch) quand le client valide un récapitulatif ou répond à une question.
+name: Demande xmedia·ai
+
+on:
+  repository_dispatch:
+    types: [xmedia-ai]
+  # Relance à la main par l'agence (onglet Actions → Demande xmedia·ai → Run workflow)
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "Identifiant de la demande (ex. 20260929-ab12cd34)"
+        required: true
+      action:
+        description: "realiser (première réalisation) ou completer (après les réponses du client)"
+        type: choice
+        options: [realiser, completer]
+        default: realiser
+
+concurrency:
+  group: demande-${{ github.event.client_payload.id || inputs.id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  realiser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      ID: ${{ github.event.client_payload.id || inputs.id }}
+      ACTION: ${{ github.event.client_payload.action || inputs.action }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      URL_PRODUCTION: ${{ vars.URL_PRODUCTION }}
+    steps:
+      - name: Vérifier la demande
+        run: |
+          [[ "$ID" =~ ^[0-9]{8}-[a-f0-9]{8}$ ]] || { echo "::error::Identifiant de demande invalide"; exit 1; }
+          [[ "$ACTION" =~ ^(realiser|completer)$ ]] || { echo "::error::Action inconnue"; exit 1; }
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Récupérer la demande et les photos
+        # Téléchargement signé depuis le site (webhook.php, type « export ») : les données restent
+        # inaccessibles au compte de déploiement sur le serveur.
+        env:
+          SECRET: ${{ secrets.XMEDIA_AI_SECRET }}
+        run: |
+          mkdir -p _demande
+          CORPS=$(jq -cn --arg id "$ID" --argjson ts "$(date +%s)" '{type:"export", id:$id, ts:$ts}')
+          SIG=$(printf '%s' "$CORPS" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')
+          CODE=$(curl -sS -L --post301 --post302 -o _demande/demande.tar -w '%{http_code}' -X POST "${URL_PRODUCTION%/}/xmedia-ai/webhook.php" \
+            -H 'Content-Type: application/json' -H "X-Xmedia-Signature: sha256=$SIG" -d "$CORPS")
+          [ "$CODE" = 200 ] || { echo "::error::Demande non récupérée (HTTP $CODE) : $(head -c 300 _demande/demande.tar)"; exit 1; }
+          tar -xf _demande/demande.tar -C _demande && rm _demande/demande.tar
+          jq -e '.recap' _demande/demande.json > /dev/null || { echo "::error::Récapitulatif absent"; exit 1; }
+
+      - name: Préparer la branche
+        run: |
+          git config user.name "xmedia·ai"
+          git config user.email "xmedia-ai@users.noreply.github.com"
+          BR=$(jq -r '.branche // empty' _demande/demande.json)
+          [ -n "$BR" ] || BR="ia/$(date +%F)-$ID"
+          if git ls-remote --exit-code --heads origin "$BR" > /dev/null; then git checkout "$BR"; else git checkout -b "$BR"; fi
+          echo "BRANCHE=$BR" >> "$GITHUB_ENV"
+
+      - name: Limite de tours selon la demande
+        # Un brief met tout le site en place : beaucoup plus de fichiers qu'une demande ordinaire
+        run: |
+          if [ "$(jq -r '.type // empty' _demande/demande.json)" = brief ]; then echo "TOURS=160" >> "$GITHUB_ENV"; else echo "TOURS=60" >> "$GITHUB_ENV"; fi
+
+      - name: Réalisation par Claude
+        uses: anthropics/claude-code-action@v1
+        # Limite de tours dépassée ou arrêt : le travail déjà fait n'est pas perdu, la validation décide
+        continue-on-error: true
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            Suis exactement les instructions du fichier ai/prompt-realisation.md.
+            Demande : _demande/demande.json. Action : ${{ env.ACTION }}.
+          claude_args: |
+            --model ${{ vars.CLAUDE_MODELE || 'claude-sonnet-5' }}
+            --max-turns ${{ env.TOURS }}
+            --allowedTools "Read,Write,Edit,MultiEdit,Glob,Grep,LS,WebSearch,Bash(npm run validate:*),Bash(npm run import-media:*),Bash(npm run build:*),Bash(npm run maillage:*),Bash(git status:*),Bash(git diff:*)"
+
+      - name: Journal de la réalisation (7 jours, pour diagnostic)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journal-claude-${{ env.ID }}
+          path: ${{ runner.temp }}/claude-execution-output.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Garde-fous (zones autorisées)
+        run: |
+          git status --porcelain --untracked-files=all | cut -c4- | grep -v '^_demande/' > _demande/modifies.txt || true
+          # Brief (questionnaire d'accueil) : une nouvelle catégorie de service peut être ajoutée aux taxonomies
+          PERMIS='^(content/|media/|data/(menu|footer|site|formulaires)\.json$)'
+          [ "$(jq -r '.type // empty' _demande/demande.json)" = brief ] && PERMIS='^(content/|media/|data/(menu|footer|site|formulaires|taxonomies)\.json$)'
+          INTERDITS=$(grep -vE "$PERMIS" _demande/modifies.txt || true)
+          if [ -n "$INTERDITS" ]; then
+            echo "::warning::Modifications hors zones autorisées annulées : $INTERDITS"
+            for f in $INTERDITS; do git checkout -- "$f" 2>/dev/null || rm -f "$f"; done
+          fi
+
+      - name: Valider
+        run: |
+          npm run --silent validate -- --json > _demande/validation.json || true
+          INTERROMPUE=0
+          if [ ! -f _demande/rapport.json ]; then
+            INTERROMPUE=1
+            echo '{"resume":"Réalisation interrompue avant la fin (limite de temps ou de tours) : la proposition est incomplète, à reprendre.","hypotheses":[],"questions":[],"pages":[]}' > _demande/rapport.json
+          fi
+          AUTRES=$(jq '[.erreurs[] | select(.message | test("marqueur à compléter") | not)] | length' _demande/validation.json)
+          QUESTIONS=$(jq '.questions | length' _demande/rapport.json)
+          if [ "$AUTRES" -gt 0 ] || [ "$INTERROMPUE" = 1 ]; then STATUT=echec
+          elif [ "$QUESTIONS" -gt 0 ]; then STATUT=attente_client
+          else STATUT=a_valider; fi
+          echo "STATUT=$STATUT" >> "$GITHUB_ENV"
+          echo "### Demande $ID → $STATUT" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '.erreurs[] | "- \(.fichier) › \(.chemin) : \(.message)"' _demande/validation.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enregistrer et ouvrir la proposition
+        run: |
+          git add content media data
+          TITRE=$(jq -r '.titre // empty' _demande/rapport.json)
+          [ -n "$TITRE" ] || TITRE=$(jq -r '.recap.titre // "Demande"' _demande/demande.json)
+          if ! git diff --cached --quiet; then
+            git commit -q -m "xmedia·ai : $TITRE ($ID)" -m "$(jq -r '.resume' _demande/rapport.json)" -m "Demande client $ID, action $ACTION."
+            git push -q origin "$BRANCHE"
+          elif [ "$ACTION" = "realiser" ]; then
+            echo "STATUT=echec" >> "$GITHUB_ENV"; echo "::error::Aucune modification produite"; exit 0
+          fi
+          {
+            echo "**Demande client** \`$ID\` via xmedia·ai"; echo
+            echo "$(jq -r '.resume' _demande/rapport.json)"; echo
+            echo "**Récapitulatif validé par le client**"; echo; jq -r '.recap.consignes' _demande/demande.json; echo
+            echo "**Hypothèses**"; jq -r '.hypotheses[]? | "- " + .' _demande/rapport.json; echo
+            echo "**Questions en attente du client**"; jq -r '.questions[]? | "- " + .' _demande/rapport.json; echo
+            echo "**Pages**"; jq -r '.pages[]? | "- " + .' _demande/rapport.json; echo
+            if [ "$(jq '.suggestions_brief // [] | length' _demande/rapport.json)" -gt 0 ]; then
+              echo "**Pour faire évoluer le questionnaire « $(jq -r '.brief.metier.id // "socle"' _demande/demande.json) »** (xmedia-serveur, commun/briefs)"
+              jq -r '.suggestions_brief[] | "- " + .' _demande/rapport.json; echo
+            fi
+            echo "**Réponses du client**"; jq -r '.questions[]? | select(.reponse != "") | "- " + .texte + " → " + .reponse' _demande/demande.json
+          } > _demande/pr.md
+          PR=$(gh pr list --head "$BRANCHE" --state open --json number --jq '.[0].number')
+          if [ -z "$PR" ]; then
+            gh pr create --base main --head "$BRANCHE" --title "[xmedia·ai] $TITRE" --body-file _demande/pr.md $([ "$STATUT" != a_valider ] && echo --draft) || {
+              echo "::error::Proposition non créée : dans GitHub, Settings → Actions → General → Workflow permissions, cocher « Allow GitHub Actions to create and approve pull requests ». Le travail est sur la branche $BRANCHE."
+              exit 1; }
+            PR=$(gh pr list --head "$BRANCHE" --state open --json number --jq '.[0].number')
+          else
+            gh pr edit "$PR" --body-file _demande/pr.md
+            if [ "$STATUT" = a_valider ]; then gh pr ready "$PR"; fi
+          fi
+          echo "PR_NUMERO=$PR" >> "$GITHUB_ENV"
+          echo "PR_URL=$(gh pr view "$PR" --json url --jq .url)" >> "$GITHUB_ENV"
+
+      - name: Prévenir le site
+        if: always()
+        env:
+          SECRET: ${{ secrets.XMEDIA_AI_SECRET }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          [ "$JOB_STATUS" = success ] || STATUT=echec
+          [ -f _demande/rapport.json ] || echo '{}' > _demande/rapport.json
+          CORPS=$(jq -cn --arg id "$ID" --arg statut "${STATUT:-echec}" --arg branche "$BRANCHE" --arg url "${PR_URL:-}" --arg num "${PR_NUMERO:-}" \
+            --arg note "run ${{ github.run_id }}" --slurpfile r _demande/rapport.json \
+            '{type:"statut", id:$id, statut:$statut, branche:$branche, pr_url:(if $url == "" then null else $url end), pr_numero:(if $num == "" then null else ($num|tonumber) end), note:$note,
+              rapport:{resume:($r[0].resume // ""), hypotheses:($r[0].hypotheses // []), pages:($r[0].pages // [])}, questions:($r[0].questions // [])}')
+          SIG=$(printf '%s' "$CORPS" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')
+          curl -sS --fail -L --post301 --post302 -X POST "${URL_PRODUCTION%/}/xmedia-ai/webhook.php" -H 'Content-Type: application/json' -H "X-Xmedia-Signature: sha256=$SIG" -d "$CORPS"

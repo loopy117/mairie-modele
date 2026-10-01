@@ -1,0 +1,30 @@
+# Vérifie chaque proposition de modification (Decap, espace client, développement)
+# avant qu'elle soit fusionnée : validation du contenu, construction complète, maillage.
+name: Vérification
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validation du contenu
+        run: |
+          npm run --silent validate -- --json > validation.json || true
+          jq -r '"### \(if .ok then "✔ Contenu valide" else "✖ Contenu invalide" end)", (.erreurs[] | "- \(.fichier) › \(.chemin) : \(.message)"), (.avertissements[] | "- ⚠ \(.fichier) › \(.chemin) : \(.message)")' validation.json >> "$GITHUB_STEP_SUMMARY"
+          jq -e '.ok' validation.json > /dev/null
+      - name: Construction du site
+        run: npx astro build
+      - name: Maillage interne
+        run: |
+          npm run --silent test
+          npx tsx scripts/maillage.ts | tee maillage.txt
+          { echo "### Maillage interne"; sed 's/^/    /' maillage.txt; } >> "$GITHUB_STEP_SUMMARY"

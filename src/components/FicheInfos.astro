@@ -1,0 +1,79 @@
+---
+/**
+ * Informations pratiques d'une page de détail : date et lieu d'un événement, document et preuve de mise en ligne
+ * d'un acte, pièces à fournir d'une démarche, coordonnées d'une fiche de l'annuaire.
+ */
+import Section from './Section.astro';
+import { infosDocument, miseEnLigne, dateLongue, dateHeure } from '../lib/publication';
+interface Props { collection: string; id: string; data: any }
+const { collection, id, data: d } = Astro.props;
+const lignes: [string, string, string?][] = [];        // [libellé, texte, lien]
+let doc = null as ReturnType<typeof infosDocument>, enLigne: Date | undefined, pieces: string[] = [];
+if (collection === 'agenda') {
+  const long = (x: Date) => new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(x));
+  lignes.push(['Date', d.date_fin && +new Date(d.date_fin) !== +new Date(d.date) ? `Du ${long(d.date)} au ${long(d.date_fin)}` : long(d.date)]);
+  if (d.horaire) lignes.push(['Horaire', d.horaire]);
+  lignes.push(['Lieu', d.lieu]);
+  if (d.organisateur) lignes.push(['Organisé par', d.organisateur]);
+}
+if (collection === 'actes' || collection === 'documents') {
+  doc = infosDocument(d.fichier);
+  if (collection === 'actes') { lignes.push(["Date de l'acte", dateLongue(d.date)]); enLigne = miseEnLigne(`content/actes/${id}.md`); }
+}
+if (collection === 'demarches') {
+  pieces = d.pieces ?? [];
+  if (d.contact) lignes.push(["Où s'adresser", d.contact]);
+}
+if (collection === 'annuaire') {
+  if (d.adresse) lignes.push(['Adresse', d.adresse]);
+  if (d.telephone) lignes.push(['Téléphone', d.telephone, 'tel:' + d.telephone.replace(/[^\d+]/g, '').replace(/^0/, '+33')]);
+  if (d.email) lignes.push(['E-mail', d.email, 'mailto:' + d.email]);
+  if (d.site) lignes.push(['Site internet', d.site.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''), d.site]);
+  if (d.horaires) lignes.push(['Horaires', d.horaires]);
+}
+const rien = !lignes.length && !doc && !pieces.length && !(collection === 'demarches' && d.lien);
+---
+{!rien && (
+  <Section largeur="etroite" spacing="compact">
+    <div class="fi">
+      {lignes.length > 0 && (
+        <dl class="fi__liste">
+          {lignes.map(([l, t, href]) => <><dt>{l}</dt><dd>{href ? <a href={href} {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}>{t}{href.startsWith('http') && <span class="visually-hidden"> (nouvel onglet)</span>}</a> : t}</dd></>)}
+        </dl>
+      )}
+      {doc && (
+        <div class="fi__doc">
+          <a class="fi__bouton" href={doc.url} download>Télécharger {collection === 'actes' ? "l'acte" : 'le document'} <span>(PDF, {doc.taille})</span></a>
+          {collection === 'actes' && (
+            <p class="fi__preuve">
+              {enLigne ? <>Mis en ligne le <time datetime={enLigne.toISOString()}>{dateHeure(enLigne)}</time>.</> : <>Pas encore publié.</>}
+              {' '}Empreinte SHA-256 du document : <code>{doc.empreinte}</code>
+            </p>
+          )}
+        </div>
+      )}
+      {collection === 'demarches' && d.lien && (
+        <p><a class="fi__bouton" href={d.lien} target="_blank" rel="noopener">Faire la démarche en ligne<span class="visually-hidden"> (nouvel onglet)</span></a></p>
+      )}
+      {pieces.length > 0 && (
+        <div class="fi__pieces">
+          <h2>Pièces à fournir</h2>
+          <ul>{pieces.map((p) => <li>{p}</li>)}</ul>
+        </div>
+      )}
+    </div>
+  </Section>
+)}
+<style>
+  .fi { display: flex; flex-direction: column; gap: 20px; padding: 22px 24px; border: 1px solid var(--c-border); border-radius: var(--radius-lg); background: var(--c-surface); }
+  .fi__liste { display: grid; grid-template-columns: max-content 1fr; gap: 8px 20px; margin: 0; }
+  .fi__liste dt { font-weight: 600; color: var(--c-text-muted); } .fi__liste dd { margin: 0; word-break: break-word; }
+  @media (max-width: 560px) { .fi__liste { grid-template-columns: 1fr; gap: 2px; } .fi__liste dd { margin-bottom: 8px; } }
+  .fi__bouton { display: inline-flex; gap: 6px; align-items: baseline; padding: 12px 20px; border-radius: var(--radius-pill); background: var(--c-ink); color: #fff; font-weight: 700; text-decoration: none; }
+  .fi__bouton span { font-weight: 400; opacity: .85; }
+  .fi__bouton:hover { color: #fff; filter: brightness(1.15); }
+  .fi__doc { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .fi__preuve { font-size: 13px; color: var(--c-text-muted); word-break: break-all; }
+  .fi__preuve code { font-size: 12px; }
+  .fi__pieces h2 { font-size: var(--fs-xl); margin-bottom: 8px; } .fi__pieces ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>

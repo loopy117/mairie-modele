@@ -1,0 +1,26 @@
+---
+/** Bandeau d'alerte (data/alerte.json) ; masqué après « jusqu_au », aussi dans le navigateur. */
+import donnees from '../../data/alerte.json';
+import { alerte } from '../schemas/alerte';
+const a = alerte.parse(donnees);
+const aujourdhui = new Date().toISOString().slice(0, 10);
+const visible = a.actif && a.message && (!a.jusqu_au || a.jusqu_au >= aujourdhui);
+const libelle = { info: 'Information', important: 'Important', urgent: 'Alerte' }[a.niveau];
+---
+{visible && (
+  <aside class:list={['alerte', `alerte--${a.niveau}`]} aria-label={`${libelle} de la commune`} data-jusqu={a.jusqu_au}>
+    <p class="alerte__texte"><strong class="alerte__niveau">{libelle}</strong> {a.message}{a.lien && <> <a href={a.lien.href}>{a.lien.label}</a></>}</p>
+  </aside>
+)}
+<script is:inline>
+  (function () { var b = document.querySelector('.alerte[data-jusqu]'); if (b && b.dataset.jusqu < new Date().toISOString().slice(0, 10)) b.remove(); })();
+</script>
+<style>
+  .alerte { padding: 10px 20px; font-size: var(--fs-base); line-height: 1.45; }
+  .alerte__texte { max-width: var(--max-w, 1200px); margin: 0 auto; }
+  .alerte__niveau { text-transform: uppercase; letter-spacing: .06em; font-size: 13px; margin-right: 6px; }
+  .alerte a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .alerte--info { background: #e8eefc; color: #12305e; }
+  .alerte--important { background: #fdf0d9; color: #5a3500; }
+  .alerte--urgent { background: #b42318; color: #fff; }
+</style>

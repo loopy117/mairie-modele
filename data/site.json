@@ -1,0 +1,69 @@
+{
+  "nom": "Commune de Saint-Exemple",
+  "baseline": "Site officiel de la commune",
+  "description": "Saint-Exemple, commune fictive de démonstration : actualités, agenda, démarches, actes officiels et services de la mairie.",
+  "url": "https://www.saint-exemple.fr",
+  "types_schema": [
+    "GovernmentOffice"
+  ],
+  "telephone": "04 00 00 00 00",
+  "email": "mairie@saint-exemple.fr",
+  "horaires": "Lundi, mardi, jeudi, vendredi 8 h 30 – 12 h ; mercredi 14 h – 18 h",
+  "horaires_detail": [
+    {
+      "jours": [
+        "lundi",
+        "mardi",
+        "jeudi",
+        "vendredi"
+      ],
+      "ouverture": "08:30",
+      "fermeture": "12:00"
+    },
+    {
+      "jours": [
+        "mercredi"
+      ],
+      "ouverture": "14:00",
+      "fermeture": "18:00"
+    }
+  ],
+  "adresse": {
+    "rue": "1 place de la Mairie",
+    "ville": "Saint-Exemple",
+    "code_postal": "00000",
+    "pays": "FR"
+  },
+  "afficher_adresse": true,
+  "legal": {
+    "raison_sociale": "Commune de Saint-Exemple",
+    "forme": "collectivité territoriale",
+    "directeur_publication": "Le maire de Saint-Exemple"
+  },
+  "zone_resume": "Saint-Exemple",
+  "urgence": {
+    "actif": false,
+    "texte": ""
+  },
+  "reseaux": [],
+  "cta_defaut": {
+    "titre": "Une question, une démarche ?",
+    "texte": "L'accueil de la mairie vous renseigne aux heures d'ouverture, par téléphone ou par e-mail.",
+    "ctas": [
+      {
+        "label": "Contacter la mairie",
+        "href": "/contact",
+        "style": "primaire"
+      },
+      {
+        "label": "04 00 00 00 00",
+        "href": "tel:+33400000000",
+        "style": "secondaire"
+      }
+    ]
+  },
+  "siret": "000 000 000 00000",
+  "villes": [
+    "Saint-Exemple"
+  ]
+}

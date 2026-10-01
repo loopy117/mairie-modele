@@ -1,0 +1,19 @@
+---
+import { urlElement } from '../lib/urls';
+const { element } = Astro.props;
+const d = element.data;
+---
+<article class="dc">
+  <h3 class="dc__titre"><a href={urlElement('demarches', element.id)}>{d.titre}</a></h3>
+  {d.resume && <p class="dc__resume">{d.resume}</p>}
+  <span class="dc__lien" aria-hidden="true">Voir la démarche →</span>
+</article>
+<style>
+  .dc { position: relative; height: 100%; padding: 20px 22px; border: 1px solid var(--c-border); border-radius: var(--radius-lg); background: var(--c-surface); display: flex; flex-direction: column; gap: 10px; transition: box-shadow .2s; }
+  .dc:hover { box-shadow: 0 10px 30px oklch(0.25 0.03 255 / 0.1); }
+  .dc__titre { font-size: 18px; font-weight: 700; line-height: 1.3; }
+  .dc__titre a { color: var(--c-text); } .dc__titre a::after { content: ''; position: absolute; inset: 0; }
+  .dc:has(a:focus-visible) { outline: 3px solid var(--c-link); outline-offset: 2px; } .dc__titre a:focus-visible { outline: none; }
+  .dc__resume { font-size: var(--fs-base); color: var(--c-text-body); }
+  .dc__lien { margin-top: auto; font-weight: 600; color: var(--c-link); font-size: var(--fs-base); }
+</style>

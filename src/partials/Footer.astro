@@ -1,0 +1,41 @@
+---
+import Logo from './Logo.astro';
+import site from '../../data/site.json';
+import { navigation } from '../lib/site';
+const nav = await navigation();
+const tel = 'tel:+33' + site.telephone.replace(/\s/g, '').replace(/^0/, '');
+const annee = new Date().getFullYear();
+const siret = (site as any).siret;
+---
+<footer class="footer on-dark">
+  <div class="container footer__inner">
+    <div class="footer__ligne">
+      <a class="footer__marque" href="/" aria-label={`${site.nom}, accueil`}><Logo taille={52} variante="sombre" /></a>
+      <span class="footer__par">{site.baseline}</span>
+      {site.zone_resume && <span class="footer__devise">· {site.zone_resume}</span>}
+    </div>
+    <div class="footer__ligne footer__droite">
+      {site.telephone && <a href={tel}>{site.telephone}</a>}
+      {site.email && <a href={`mailto:${site.email}`}>{site.email}</a>}
+      {nav.legal.map((l) => <a href={l.href}>{l.label}</a>)}
+      <a href="/plan-du-site">Plan du site</a>
+    </div>
+    {nav.colonnes.filter((c) => c.liens.length).length > 0 && (
+      <nav class="footer__liens" aria-label="Pied de page">
+        {nav.colonnes.flatMap((c) => c.liens).map((l) => <a href={l.href}>{l.label}</a>)}
+      </nav>
+    )}
+    <p class="footer__bas">© {annee} {site.nom} · {site.adresse.ville}{siret && ` · SIRET ${siret}`}</p>
+  </div>
+</footer>
+<style>
+  .footer { background: var(--c-primary-deep, var(--c-ink)); padding: 36px 0 28px; color: var(--c-on-dark-body); font-size: 15px; }
+  .footer__inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 18px 32px; }
+  .footer__ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .footer__droite { gap: 8px 22px; }
+  .footer a { color: var(--c-on-dark-body); }
+  .footer a:hover { color: #fff; text-decoration: underline; }
+  .footer__devise { font-style: italic; color: var(--c-on-dark-muted); }
+  .footer__liens { width: 100%; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  .footer__bas { width: 100%; padding-top: 18px; border-top: 1px solid var(--c-border-dark); font-size: 13px; color: var(--c-on-dark-muted); }
+</style>

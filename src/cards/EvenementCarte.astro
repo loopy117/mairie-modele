@@ -1,0 +1,29 @@
+---
+import { urlElement } from '../lib/urls';
+const { element } = Astro.props;
+const d = element.data;
+const debut = new Date(d.date), fin = d.date_fin ? new Date(d.date_fin) : undefined;
+const jour = new Intl.DateTimeFormat('fr-FR', { day: 'numeric' }).format(debut);
+const mois = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(debut).replace('.', '');
+const long = (x: Date) => new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(x);
+const quand = fin && fin.getTime() !== debut.getTime() ? `Du ${long(debut)} au ${long(fin)}` : long(debut);
+---
+<article class="ev">
+  <p class="ev__date" aria-hidden="true"><span class="ev__jour">{jour}</span><span class="ev__mois">{mois}</span></p>
+  <div class="ev__corps">
+    <h3 class="ev__titre"><a href={urlElement('agenda', element.id)}>{d.titre}</a></h3>
+    <p class="ev__infos"><time datetime={debut.toISOString().slice(0, 10)}>{quand.charAt(0).toUpperCase() + quand.slice(1)}</time>{d.horaire && <> · {d.horaire}</>} · {d.lieu}</p>
+    {d.resume && <p class="ev__resume">{d.resume}</p>}
+  </div>
+</article>
+<style>
+  .ev { position: relative; display: grid; grid-template-columns: 64px 1fr; gap: 18px; align-items: start; }
+  .ev__date { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; height: 68px; border-radius: 12px; background: var(--c-accent-soft, var(--c-bg-alt)); color: var(--c-ink); line-height: 1; }
+  .ev__jour { font-size: 26px; font-weight: 700; } .ev__mois { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+  .ev__corps { display: flex; flex-direction: column; gap: 4px; }
+  .ev__titre { font-size: 18px; font-weight: 700; line-height: 1.3; }
+  .ev__titre a { color: var(--c-text); }
+  .ev__titre a::after { content: ''; position: absolute; inset: 0; }
+  .ev__infos { font-size: 14px; color: var(--c-text-muted); }
+  .ev__resume { font-size: var(--fs-base); color: var(--c-text-body); }
+</style>

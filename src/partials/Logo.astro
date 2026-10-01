@@ -1,0 +1,19 @@
+---
+/**
+ * Logo de la commune (modèle) : emblème simple (toit et porte de la mairie) et nom.
+ * À remplacer par le blason ou le logo fourni par la commune (src/assets/, comme pour les autres sites).
+ */
+interface Props { taille?: number; variante?: 'clair' | 'sombre'; priorite?: boolean }
+const { taille = 52, variante = 'clair' } = Astro.props;
+---
+<span class:list={['logo', variante === 'sombre' && 'logo--sombre']}>
+  <svg width={taille} height={taille} viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#1E3A64"/><path d="M14 46V28l18-12 18 12v18" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M27 46V35h10v11" fill="none" stroke="#CFE6D6" stroke-width="4"/><circle cx="32" cy="26" r="3.2" fill="#CFE6D6"/></svg>
+  <span class="logo__nom" aria-hidden="true"><span class="logo__petit">Commune de</span>Saint-Exemple</span>
+</span>
+<style>
+  .logo { display: inline-flex; align-items: center; gap: 12px; flex: none; }
+  .logo svg { display: block; }
+  .logo__nom { display: flex; flex-direction: column; font-family: var(--font-title); font-weight: 700; font-size: 21px; line-height: 1.1; color: var(--c-ink); }
+  .logo__petit { font-family: var(--font-sans); font-weight: 600; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--c-text-muted); }
+  .logo--sombre .logo__nom { color: #fff; } .logo--sombre .logo__petit { color: var(--c-on-dark-muted); }
+</style>
