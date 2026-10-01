@@ -1,4 +1,4 @@
-# Déploiement — Artech paysages
+# Déploiement — site de mairie (modèle)
 
 Hébergé sur le serveur xmediacreation (kit `xmedia-serveur`). Domaine principal : celui de la commune (modèle : `saint-exemple.fr`, fictif).
 Dépôt : `loopy117/mairie-modele`.
@@ -51,7 +51,7 @@ Sur https://platform.claude.com, de préférence dans un **espace de travail (wo
 
 1. Créer deux clés :
    - `<commune>-espace-client` → pour le serveur (`www.php`, étape 6) : dialogue avec le client, cadrage des demandes ;
-   - `artech-github` → pour GitHub (secret `ANTHROPIC_API_KEY`, étape 7) : réalisation des demandes.
+   - `<commune>-github` → pour GitHub (secret `ANTHROPIC_API_KEY`, étape 7) : réalisation des demandes.
 2. Fixer une **limite de dépense mensuelle** sur l'espace de travail (par exemple 20 € pendant les essais).
 
 Deux clés séparées : on peut en révoquer une sans couper l'autre, et la console montre la consommation de chacune.
@@ -65,7 +65,7 @@ github.com → photo de profil → **Settings** → **Developer settings** → *
 
 | Champ | Valeur |
 | --- | --- |
-| Token name | `artech-serveur` |
+| Token name | `<commune>-serveur` |
 | Resource owner | `loopy117` |
 | Expiration | 1 an (noter la date dans l'agenda pour le renouveler) |
 | Repository access | **Only select repositories** → `loopy117/mairie-modele` |
@@ -83,9 +83,9 @@ github.com → **Settings** → **Developer settings** → **OAuth Apps** → **
 
 | Champ | Valeur |
 | --- | --- |
-| Application name | `Artech paysages — édition` |
-| Homepage URL | `https://artech-ubaye.fr` |
-| Authorization callback URL | `https://artech-ubaye.fr/admin/auth.php` |
+| Application name | `Commune de <commune> — édition` |
+| Homepage URL | `https://www.<commune>.fr` |
+| Authorization callback URL | `https://www.<commune>.fr/admin/auth.php` |
 
 **Register application**, noter le *Client ID* (`Ov23…`), puis **Generate a new client secret** et le copier.
 
@@ -100,14 +100,14 @@ sudo xm-site hash
 Copier l'empreinte affichée (`$2y$…`), puis ouvrir la configuration :
 
 ```sh
-sudo xm-site config artech
+sudo xm-site config <commune>
 ```
 
 Remplacer chaque `A-REMPLIR` :
 
 | Champ | Valeur |
 | --- | --- |
-| `destinataires` | adresse qui reçoit les demandes du formulaire (ex. `contact@artech-ubaye.fr`) |
+| `destinataires` | adresse qui reçoit les demandes du formulaire (ex. `contact@www.<commune>.fr`) |
 | `decap` → `client_id`, `client_secret` | étape 5 |
 | `xmedia_ai` → `utilisateurs` | e-mail, nom et `hash` de chaque compte client (un `hash` par personne) |
 | `xmedia_ai` → `email_client` | adresse qui reçoit « demande reçue », questions, « en ligne » |
@@ -128,9 +128,9 @@ Dépôt `loopy117/mairie-modele` → **Settings** :
 | Nom | Valeur |
 | --- | --- |
 | `SSH_HOTE` | affiché à l'étape 2 |
-| `SSH_UTILISATEUR` | `d-artech` |
+| `SSH_UTILISATEUR` | `d-<commune>` |
 | `DOSSIER_PRODUCTION` | `www` |
-| `URL_PRODUCTION` | `https://artech-ubaye.fr` (sans barre à la fin) |
+| `URL_PRODUCTION` | `https://www.<commune>.fr` (sans barre à la fin) |
 | `NOINDEX_PRODUCTION` | `1` jusqu'au lancement (étape 11) |
 | `CLAUDE_MODELE` | facultatif (défaut `claude-sonnet-5`) |
 
@@ -141,7 +141,7 @@ Dépôt `loopy117/mairie-modele` → **Settings** :
 | `SSH_CLE_PRIVEE` | étape 2 (lignes BEGIN et END comprises) |
 | `SSH_KNOWN_HOSTS` | étape 2 (toutes les lignes) |
 | `XMEDIA_AI_SECRET` | étape 2 (identique au `secret_webhook` du serveur) |
-| `ANTHROPIC_API_KEY` | clé `artech-github` (étape 3) |
+| `ANTHROPIC_API_KEY` | clé `<commune>-github` (étape 3) |
 
 **Actions → General → Workflow permissions** : « Read and write permissions » et cocher
 « Allow GitHub Actions to create and approve pull requests ». Sans cette case, les réalisations échouent au moment
@@ -150,11 +150,11 @@ d'ouvrir la proposition.
 ## 8. E-mails du site
 
 ```sh
-sudo xm-site envoi artech
+sudo xm-site envoi <commune>
 ```
 
 Crée l'envoi par Scaleway (domaine, SPF, DKIM, DMARC chez OVH, clé d'envoi) et le fichier `www.envoi.php`.
-Peut se faire avant la bascule DNS. Les e-mails partent de `formulaire@artech.fr`.
+Peut se faire avant la bascule DNS. Les e-mails partent de `formulaire@<commune>.fr`.
 
 ## 9. Premier déploiement
 
@@ -168,18 +168,18 @@ ls /srv/sites/<commune>/www
 ## 10. Bascule DNS et Search Console
 
 ```sh
-sudo xm-site dns artech     # affiche le plan (anciennes → nouvelles adresses), demande confirmation
-sudo xm-site gsc artech     # propriété Search Console vérifiée par DNS, envoi du sitemap
+sudo xm-site dns <commune>     # affiche le plan (anciennes → nouvelles adresses), demande confirmation
+sudo xm-site gsc <commune>     # propriété Search Console vérifiée par DNS, envoi du sitemap
 ```
 
-Le certificat HTTPS est obtenu tout seul 1 à 2 minutes après la bascule. Ouvrir https://artech-ubaye.fr.
+Le certificat HTTPS est obtenu tout seul 1 à 2 minutes après la bascule. Ouvrir https://www.<commune>.fr.
 
 ## 11. Tester, puis lancer
 
 1. Formulaire d'audit : envoyer une demande, vérifier la réception et l'onglet « Demandes clients ».
-2. Espace client : https://artech-ubaye.fr/xmedia-ai/ avec un compte client → nouvelle demande → « C'est bon, lancez ».
+2. Espace client : https://www.<commune>.fr/xmedia-ai/ avec un compte client → nouvelle demande → « C'est bon, lancez ».
    Onglet Actions : le workflow « Demande xmedia·ai » tourne, une proposition apparaît, l'e-mail « À valider » arrive.
-3. Éditeur : https://artech-ubaye.fr/admin/ → « Se connecter avec GitHub ».
+3. Éditeur : https://www.<commune>.fr/admin/ → « Se connecter avec GitHub ».
    Avant le lancement : compléter `legal` dans `data/site.json` (raison sociale, forme, immatriculation ou SIRET, adresse du siège, directeur de la publication ; médiateur si clientèle de particuliers), puis passer `content/pages/mentions-legales.yaml` et `confidentialite.yaml` en `statut: publie`. Ces deux pages sont générées par le bloc `legal` (éditeur, création, hébergeur, conditions d'utilisation, données personnelles). Le build refuse d'ouvrir le site aux moteurs (`NOINDEX=0`) sans elles.
 4. Lancement : supprimer la variable `NOINDEX_PRODUCTION` dans GitHub, relancer **Déploiement**.
    À chaque mise en ligne suivante, les pages ajoutées, modifiées ou supprimées sont signalées à Bing (et aux autres moteurs IndexNow) : étape « Prévenir Bing… » du déploiement (`scripts/indexnow.mjs`). Clé IndexNow : variable `INDEXNOW_CLE` facultative, sinon dérivée de l'adresse du site ; publiée dans `dist/<clé>.txt`.
