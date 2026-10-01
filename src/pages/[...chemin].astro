@@ -85,8 +85,10 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
   return (
     <Base titre={entree.data.titre} seo={{ ...entree.data.seo, description: entree.data.seo?.description ?? entree.data.resume }} url={url} jsonld={jsonld}>
       <Sections sections={avant} courant={courant} />
-      <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />
+      {/* Démarches : le texte d'abord, puis pièces à fournir ; ailleurs, les infos pratiques en premier */}
+      {props.collection !== 'demarches' && <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />}
       {aCorps && <Section largeur="etroite"><Markdown source={entree.body} /></Section>}
+      {props.collection === 'demarches' && <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />}
       {entree.data.sections && <Sections sections={entree.data.sections} courant={courant} />}
       <Sections sections={apres} courant={courant} />
     </Base>

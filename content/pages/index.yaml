@@ -26,6 +26,8 @@ sections:
       - { icone: alerte, titre: Signaler un problème, texte: "Lampadaire éteint, trottoir abîmé, dépôt sauvage : prévenez les services techniques.", lien: { label: Faire un signalement, href: /signaler } }
       - { icone: calendrier, titre: Agenda, texte: Les manifestations de la commune et des associations., lien: { label: Voir l'agenda, href: /agenda } }
       - { icone: balance, titre: Actes officiels, texte: "Arrêtés, délibérations et procès-verbaux du conseil municipal.", lien: { label: Consulter les actes, href: /actes } }
+      - { icone: telechargement, titre: Documents, texte: "Bulletin municipal, plan local d'urbanisme, menus de la cantine.", lien: { label: Voir les documents, href: /documents } }
+      - { icone: personnes, titre: Annuaire, texte: "Associations, commerces, santé : qui contacter dans la commune.", lien: { label: Ouvrir l'annuaire, href: /annuaire } }
 
   - block: boucle
     background: alt
