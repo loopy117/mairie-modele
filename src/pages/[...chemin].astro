@@ -22,6 +22,7 @@ import taxonomies from '../../data/taxonomies.json';
 import siteBrut from '../../data/site.json';
 import type { Site } from '../schemas/site';
 import FicheInfos from '../components/FicheInfos.astro';
+import { indexSite } from '../lib/site';
 
 export async function getStaticPaths() {
   const chemins: any[] = [];
@@ -110,7 +111,8 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
     const els = (await getCollection(nom as any)).filter((e: any) => estPublie(e) && (e.data.publics ?? []).includes(props.slug)).map((e: any) => ({ id: e.id, data: e.data }));
     if (els.length) groupes.push({ nom, libelle: reglages[nom].libelle, elements: executer(els, { ordre: reglages[nom].archive?.ordre ?? 'titre asc' }, { tout: true }) });
   }
-  const autres = Object.entries(parcours as Record<string, { titre: string }>).filter(([s]) => s !== props.slug);
+  const publies = new Set([...(await indexSite()).values()].filter((e) => e.publie && e.url.startsWith('/parcours/')).map((e) => e.url.slice(10)));
+  const autres = Object.entries(parcours as Record<string, { titre: string }>).filter(([s]) => s !== props.slug && publies.has(s));
   return (
     <Base titre={p.titre} seo={{ description: p.intro }} url={url}>
       <Sections sections={[{ block: 'hero', variant: 'minimal', surtitre: 'Parcours', titre: p.titre, texte: p.intro }]} />
