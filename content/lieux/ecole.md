@@ -9,4 +9,5 @@ telephone: 04 00 00 00 05
 pmr: partiel
 pmr_detail: "Rez-de-chaussée accessible ; l'étage le sera après les travaux"
 publics: [parent, nouvel-habitant]
+sujets: [ecole]
 ---

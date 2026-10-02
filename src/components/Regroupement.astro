@@ -1,0 +1,45 @@
+---
+/**
+ * Tout ce qui porte un public (parcours) ou un sujet (mot-clé) : les pages, puis chaque collection avec sa carte.
+ * Utilisé par /parcours/<slug> et /sujets/<id>.
+ */
+import { getCollection } from 'astro:content';
+import Section from './Section.astro';
+import Disposition from '../dispositions/Disposition.astro';
+import { reglages } from '../lib/collections';
+import { executer, estPublie } from '../lib/requete';
+import { nomsCollections } from '../schemas/collections';
+import { urlPage } from '../lib/urls';
+interface Props { champ: 'publics' | 'sujets'; valeur: string }
+const { champ, valeur } = Astro.props;
+const pages = (await getCollection('pages'))
+  .filter((p: any) => p.data.statut !== 'brouillon' && (p.data[champ] ?? []).includes(valeur))
+  .map((p: any) => ({ url: urlPage(p.id), titre: p.data.titre, texte: p.data.seo?.description ?? '' }))
+  .sort((a, b) => a.titre.localeCompare(b.titre, 'fr'));
+const groupes = [] as { nom: string; libelle: string; elements: any[] }[];
+for (const nom of nomsCollections) {
+  const els = (await getCollection(nom as any)).filter((e: any) => estPublie(e) && (e.data[champ] ?? []).includes(valeur)).map((e: any) => ({ id: e.id, data: e.data }));
+  if (els.length) groupes.push({ nom, libelle: reglages[nom].libelle, elements: executer(els, { ordre: reglages[nom].archive?.ordre ?? 'titre asc' }, { tout: true }) });
+}
+---
+{pages.length > 0 && (
+  <Section titre="Pages" spacing="compact">
+    <ul class="rg-pages" data-pagefind-ignore="all">
+      {pages.map((p) => <li><a href={p.url}>{p.titre}</a>{p.texte && <p>{p.texte}</p>}</li>)}
+    </ul>
+  </Section>
+)}
+{groupes.map((g, i) => {
+  const a = reglages[g.nom as keyof typeof reglages].archive!;
+  return (
+    <Section titre={g.libelle} spacing="compact" background={(i + (pages.length ? 1 : 0)) % 2 ? 'alt' : 'clair'}>
+      <Disposition elements={g.elements} carte={a.carte} affichage={a.affichage} options={a.options} />
+    </Section>
+  );
+})}
+<style>
+  .rg-pages { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+  .rg-pages li { padding: 18px 20px; border: 1px solid var(--c-border); border-radius: var(--radius-lg); background: var(--c-surface); display: flex; flex-direction: column; gap: 6px; }
+  .rg-pages a { font-weight: 700; font-size: 18px; text-decoration: underline; text-underline-offset: 3px; }
+  .rg-pages p { font-size: 15px; color: var(--c-text-body); }
+</style>

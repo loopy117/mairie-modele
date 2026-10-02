@@ -2,7 +2,7 @@
 /**
  * Recherche dans le site (Pagefind) : texte complet des pages et des PDF, index statique construit après le build
  * (scripts/recherche.mjs), chargé par morceaux dans le navigateur. Aucun service extérieur, aucun cookie.
- * Formulaire : /recherche?q=… (le champ de l'accueil y envoie). Filtres par type de contenu.
+ * Formulaire : /recherche?q=… (le champ de l'accueil y envoie). Filtres par type de contenu et par sujet.
  */
 import Base from '../layouts/Base.astro';
 import Section from '../components/Section.astro';
@@ -17,7 +17,8 @@ import Section from '../components/Section.astro';
         <button type="submit">Rechercher</button>
       </div>
     </form>
-    <div class="r__filtres" role="group" aria-label="Filtrer les résultats par type" hidden></div>
+    <div class="r__filtres" role="group" aria-label="Filtrer les résultats par type" data-filtre="type" hidden></div>
+    <div class="r__filtres r__filtres--sujets" role="group" aria-label="Filtrer les résultats par sujet" data-filtre="sujet" hidden></div>
     <p id="r-etat" class="r__etat" role="status" aria-live="polite"></p>
     <ol id="r-resultats" class="r__liste"></ol>
     <button type="button" class="r__plus btn btn--secondaire" hidden>Plus de résultats</button>
@@ -29,10 +30,11 @@ import Section from '../components/Section.astro';
   const champ = document.getElementById('r-champ') as HTMLInputElement;
   const etat = document.getElementById('r-etat')!;
   const liste = document.getElementById('r-resultats')!;
-  const filtres = document.querySelector<HTMLElement>('.r__filtres')!;
+  const filtres = document.querySelector<HTMLElement>('[data-filtre=type]')!;
+  const filtresSujets = document.querySelector<HTMLElement>('[data-filtre=sujet]')!;
   const plus = document.querySelector<HTMLButtonElement>('.r__plus')!;
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
-  let pf: any = null, resultats: Res[] = [], affiches = 0, type = '', requete = '';
+  let pf: any = null, resultats: Res[] = [], affiches = 0, type = '', sujet = '', requete = '';
 
   async function charger() {
     if (pf) return pf;
@@ -63,20 +65,26 @@ import Section from '../components/Section.astro';
   async function chercher(q: string) {
     requete = q.trim();
     liste.innerHTML = ''; affiches = 0; plus.hidden = true;
-    if (!requete) { etat.textContent = ''; filtres.hidden = true; return; }
+    if (!requete) { etat.textContent = ''; filtres.hidden = true; filtresSujets.hidden = true; return; }
     const p = await charger();
     if (!p) return;
-    const s = await p.search(requete, type ? { filters: { type } } : {});
+    const choix = { ...(type ? { type } : {}), ...(sujet ? { sujet } : {}) };
+    const s = await p.search(requete, Object.keys(choix).length ? { filters: choix } : {});
     if (q.trim() !== requete) return;   // une frappe plus récente a pris le relais
     resultats = s.results;
-    // Filtres : types présents pour cette recherche (sans filtre actif)
-    const tous = type ? await p.search(requete) : s;
-    const types = Object.entries((tous.filters?.type ?? {}) as Record<string, number>).filter(([, n]) => n > 0);
-    filtres.hidden = types.length < 2;
-    filtres.innerHTML = [['', 'Tout', tous.results.length] as const, ...types.map(([t, n]) => [t, t, n] as const)]
-      .map(([v, l, n]) => `<button type="button" data-type="${esc(v)}" aria-pressed="${v === type}">${esc(l)} <span class="r__nb">(${n})</span></button>`).join('');
+    // Boutons : types (avec le sujet choisi) et sujets (avec le type choisi), nombres à jour
+    const parType = sujet ? await p.search(requete, { filters: { sujet } }) : (type ? await p.search(requete) : s);
+    const parSujet = type ? await p.search(requete, { filters: { type } }) : (sujet ? await p.search(requete) : s);
+    const boutons = (el: HTMLElement, cle: string, comptes: Record<string, number>, total: number, actif: string, tout: string) => {
+      const liste = Object.entries(comptes ?? {}).filter(([, n]) => n > 0);
+      el.hidden = cle === 'type' ? liste.length < 2 : liste.length < 1;
+      el.innerHTML = [['', tout, total] as const, ...liste.map(([v, n]) => [v, v, n] as const)]
+        .map(([v, l, n]) => `<button type="button" data-${cle}="${esc(v)}" aria-pressed="${v === actif}">${esc(l)} <span class="r__nb">(${n})</span></button>`).join('');
+    };
+    boutons(filtres, 'type', parType.filters?.type, parType.results.length, type, 'Tout');
+    boutons(filtresSujets, 'sujet', parSujet.filters?.sujet, parSujet.results.length, sujet, 'Tous les sujets');
     etat.textContent = resultats.length
-      ? `${resultats.length} résultat${resultats.length > 1 ? 's' : ''} pour « ${requete} »${type ? ` dans ${type}` : ''}`
+      ? `${resultats.length} résultat${resultats.length > 1 ? 's' : ''} pour « ${requete} »${type ? ` dans ${type}` : ''}${sujet ? `, sujet ${sujet}` : ''}`
       : `Aucun résultat pour « ${requete} ». Essayez un autre mot, ou contactez la mairie.`;
     await afficherSuite();
   }
@@ -98,6 +106,12 @@ import Section from '../components/Section.astro';
     type = b.dataset.type ?? '';
     chercher(champ.value);
   });
+  filtresSujets.addEventListener('click', (ev) => {
+    const b = (ev.target as HTMLElement).closest<HTMLButtonElement>('button[data-sujet]');
+    if (!b) return;
+    sujet = b.dataset.sujet ?? '';
+    chercher(champ.value);
+  });
   plus.addEventListener('click', () => {
     const premier = affiches;
     afficherSuite().then(() => liste.querySelectorAll<HTMLAnchorElement>('li a')[premier]?.focus());
@@ -115,6 +129,8 @@ import Section from '../components/Section.astro';
   .r__filtres :global(button) { font: inherit; font-size: 14.5px; font-weight: 600; min-height: 44px; padding: 8px 16px; border-radius: var(--radius-pill); border: 2px solid var(--c-ink); background: #fff; color: var(--c-text); cursor: pointer; }
   .r__filtres :global(button[aria-pressed='true']) { background: var(--c-ink); color: #fff; }
   .r__filtres :global(.r__nb) { font-weight: 400; }
+  .r__filtres--sujets :global(button) { border-width: 1.5px; border-color: var(--c-border); font-weight: 500; }
+  .r__filtres--sujets :global(button[aria-pressed='true']) { border-color: var(--c-link); background: var(--c-link); }
   .r__etat { font-weight: 600; }
   .r__liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .r__liste :global(li) { padding: 16px 0; border-bottom: 1px solid var(--c-border); display: flex; flex-direction: column; gap: 4px; }

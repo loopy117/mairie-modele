@@ -1,0 +1,9 @@
+{
+  "sujets": [
+    { "id": "ecole", "libelle": "École", "intro": "Inscriptions, cantine, périscolaire, travaux de l'école : tout ce qui concerne l'école de la commune." },
+    { "id": "eau", "libelle": "Eau", "intro": "Réseau d'eau, travaux, coupures, assainissement : les informations sur l'eau à Saint-Exemple." },
+    { "id": "voirie", "libelle": "Voirie et circulation", "intro": "Travaux de voirie, circulation, stationnement, signalements sur la voie publique." },
+    { "id": "fetes", "libelle": "Fêtes et cérémonies", "intro": "Fête du village, marchés, commémorations : les grands rendez-vous de la commune." },
+    { "id": "conseil-municipal", "libelle": "Conseil municipal", "intro": "Séances, délibérations, procès-verbaux et budget du conseil municipal." }
+  ]
+}

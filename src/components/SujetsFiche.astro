@@ -1,0 +1,24 @@
+---
+/** Sujets d'une page ou d'une fiche, en pastilles cliquables (et filtre « sujet » de la recherche). */
+import Section from './Section.astro';
+import { SUJETS } from '../schemas/sujets';
+import { indexSite } from '../lib/site';
+interface Props { sujets?: string[] }
+const idx = await indexSite();
+const liste = (Astro.props.sujets ?? []).filter((s) => SUJETS[s] && idx.get(`/sujets/${s}`)?.publie);
+---
+{liste.length > 0 && (
+  <Section spacing="compact" largeur="etroite">
+    <nav class="sf" aria-label="Sujets">
+      <span class="sf__titre">Sujets :</span>
+      <ul>{liste.map((s) => <li><a href={`/sujets/${s}`} data-pagefind-filter="sujet">{SUJETS[s].libelle}</a></li>)}</ul>
+    </nav>
+  </Section>
+)}
+<style>
+  .sf { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .sf__titre { font-weight: 700; color: var(--c-text-muted); }
+  .sf ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .sf a { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: var(--radius-pill); border: 1.5px solid var(--c-border); background: var(--c-surface); color: var(--c-text); font-weight: 600; font-size: 15px; }
+  .sf a:hover { border-color: var(--c-link); color: var(--c-link); }
+</style>

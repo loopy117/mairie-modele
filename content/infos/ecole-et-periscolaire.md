@@ -4,6 +4,7 @@ theme: ecole
 resume: "Inscriptions, horaires, garderie du matin et du soir, menus de la cantine."
 contact: Accueil de la mairie
 publics: [parent, nouvel-habitant]
+sujets: [ecole]
 ---
 Les inscriptions à l'école se font **en mairie**, puis auprès de la directrice.
 

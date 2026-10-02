@@ -23,6 +23,7 @@ Saint-Exemple est une commune **fictive** : textes, noms et documents sont des e
 - **Recherche** (`/recherche`, lien dans l'en-tête) : Pagefind, index statique construit après le build (`scripts/recherche.mjs`) : texte complet des pages et des PDF (actes, documents, projets), filtres par type. Sans service extérieur ni cookie. Les listes de cartes et les pages de catégorie ne sont pas indexées (doublons).
 - **Photos** : réduites à l'envoi par le serveur (3200 px, redressées, sans EXIF ni GPS) et par `npm run import-media` ; la validation signale les originaux de plus de 3 Mo. Images optimisées gardées en cache entre deux déploiements (`.cache/astro`).
 - **Photothèque de l'éditeur** : chaque champ image a un bouton « Choisir dans la photothèque » (`public/admin/phototheque.js`) qui montre toutes les images publiées, avec où elles sont utilisées ; recherche et filtre ; un clic reprend la photo et son texte alternatif, sans la dupliquer. Index et vignettes générés au build (`scripts/phototheque.mjs` → `dist/admin/phototheque.json`).
+- **Sujets (mots-clés)** : liste gérée par la mairie (`data/sujets.json`, Réglages › Sujets) ; pages et fiches en portent plusieurs (`sujets`), affichés en pastilles ; une page par sujet (`/sujets/<id>`) rassemble tout, classé par type ; filtre « sujet » dans la recherche. Les pages ont aussi `publics` (parcours).
 - **Signalements** : suivi interne dans l'espace client, reçu → transmis au service → en cours → traité → clos (rien n'est publié).
 - **Thèmes** (`categorie`) : `data/taxonomies.json`.
 

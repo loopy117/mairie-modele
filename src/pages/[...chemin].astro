@@ -23,6 +23,9 @@ import siteBrut from '../../data/site.json';
 import type { Site } from '../schemas/site';
 import FicheInfos from '../components/FicheInfos.astro';
 import Album from '../components/Album.astro';
+import Regroupement from '../components/Regroupement.astro';
+import SujetsFiche from '../components/SujetsFiche.astro';
+import { SUJETS } from '../schemas/sujets';
 import { indexSite } from '../lib/site';
 
 export async function getStaticPaths() {
@@ -57,12 +60,11 @@ export async function getStaticPaths() {
       }
     }
   }
-  // Parcours (« Je viens d'arriver »…) : toutes les fiches publiées qui portent ce public, regroupées par collection
-  for (const slug of Object.keys(parcours)) {
-    let n = 0;
-    for (const nom of nomsCollections) n += (await getCollection(nom as any)).filter((e: any) => estPublie(e) && (e.data.publics ?? []).includes(slug)).length;
-    if (n) chemins.push({ params: { chemin: `parcours/${slug}` }, props: { type: 'parcours', slug } });
-  }
+  // Parcours (« Je viens d'arriver »…) et sujets (mots-clés) : pages et fiches publiées qui les portent (index du site)
+  const idx = await indexSite();
+  for (const slug of Object.keys(parcours)) if (idx.get(`/parcours/${slug}`)?.publie) chemins.push({ params: { chemin: `parcours/${slug}` }, props: { type: 'parcours', slug } });
+  for (const id of Object.keys(SUJETS)) if (idx.get(`/sujets/${id}`)?.publie) chemins.push({ params: { chemin: `sujets/${id}` }, props: { type: 'sujet', id } });
+  if (idx.get('/sujets')?.publie) chemins.push({ params: { chemin: 'sujets' }, props: { type: 'sujets' } });
   return chemins;
 }
 
@@ -74,6 +76,7 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
   return (
     <Base titre={p.data.titre} seo={p.data.seo} url={url} gabarit={p.data.gabarit} filAriane={p.data.fil_ariane ?? url !== '/'}>
       <Sections sections={p.data.sections} />
+      <SujetsFiche sujets={p.data.sujets} />
     </Base>
   );
 })()}
@@ -101,6 +104,7 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
       {props.collection === 'demarches' && <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />}
       {props.collection === 'albums' && <Album titre={entree.data.titre} photos={entree.data.photos} credit={entree.data.credit} />}
       {entree.data.sections && <Sections sections={entree.data.sections} courant={courant} />}
+      <SujetsFiche sujets={entree.data.sujets} />
       <Sections sections={apres} courant={courant} />
     </Base>
   );
@@ -108,23 +112,44 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
 
 {props.type === 'parcours' && await (async () => {
   const p = (parcours as Record<string, { titre: string; intro: string }>)[props.slug];
-  const groupes = [] as { nom: string; libelle: string; elements: any[] }[];
-  for (const nom of nomsCollections) {
-    const els = (await getCollection(nom as any)).filter((e: any) => estPublie(e) && (e.data.publics ?? []).includes(props.slug)).map((e: any) => ({ id: e.id, data: e.data }));
-    if (els.length) groupes.push({ nom, libelle: reglages[nom].libelle, elements: executer(els, { ordre: reglages[nom].archive?.ordre ?? 'titre asc' }, { tout: true }) });
-  }
   const publies = new Set([...(await indexSite()).values()].filter((e) => e.publie && e.url.startsWith('/parcours/')).map((e) => e.url.slice(10)));
   const autres = Object.entries(parcours as Record<string, { titre: string }>).filter(([s]) => s !== props.slug && publies.has(s));
   return (
     <Base titre={p.titre} seo={{ description: p.intro }} url={url}>
       <Sections sections={[{ block: 'hero', variant: 'minimal', surtitre: 'Parcours', titre: p.titre, texte: p.intro }]} />
-      {groupes.map((g, i) => (
-        <Section titre={g.libelle} background={i % 2 ? 'alt' : 'clair'}>
-          <Disposition elements={g.elements} carte={reglages[g.nom as keyof typeof reglages].archive!.carte} affichage={reglages[g.nom as keyof typeof reglages].archive!.affichage} options={reglages[g.nom as keyof typeof reglages].archive!.options} />
-        </Section>
-      ))}
+      <Regroupement champ="publics" valeur={props.slug} />
       <Section background="alt" titre="Les autres parcours">
         <nav class="filtres" aria-label="Autres parcours">{autres.map(([s, x]) => <a href={`/parcours/${s}`}>{x.titre}</a>)}</nav>
+      </Section>
+    </Base>
+  );
+})()}
+
+{props.type === 'sujet' && await (async () => {
+  const x = SUJETS[props.id];
+  const idx = await indexSite();
+  const autres = Object.entries(SUJETS).filter(([s]) => s !== props.id && idx.get(`/sujets/${s}`)?.publie);
+  return (
+    <Base titre={x.libelle} seo={{ titre: `${x.libelle} · tout sur ce sujet`, description: x.intro ?? `Toutes les pages, actualités, démarches et informations sur le sujet « ${x.libelle} ».` }} url={url} typePage="CollectionPage">
+      <Sections sections={[{ block: 'hero', variant: 'minimal', surtitre: 'Sujet', titre: x.libelle, texte: x.intro }]} />
+      <Regroupement champ="sujets" valeur={props.id} />
+      {autres.length > 0 && (
+        <Section background="alt" titre="Les autres sujets">
+          <nav class="filtres" aria-label="Autres sujets"><a href="/sujets">Tous les sujets</a>{autres.map(([s, y]) => <a href={`/sujets/${s}`}>{y.libelle}</a>)}</nav>
+        </Section>
+      )}
+    </Base>
+  );
+})()}
+
+{props.type === 'sujets' && await (async () => {
+  const idx = await indexSite();
+  const liste = Object.entries(SUJETS).filter(([s]) => idx.get(`/sujets/${s}`)?.publie);
+  return (
+    <Base titre="Tous les sujets" seo={{ description: 'Tous les sujets du site de la commune : chaque sujet rassemble les pages, actualités, démarches et informations qui le concernent.' }} url={url} typePage="CollectionPage">
+      <Sections sections={[{ block: 'hero', variant: 'minimal', titre: 'Tous les sujets', texte: 'Chaque sujet rassemble les pages, actualités, démarches et informations qui le concernent.' }]} />
+      <Section>
+        <ul class="sujets-liste">{liste.map(([s, y]) => <li><a href={`/sujets/${s}`}>{y.libelle}</a>{y.intro && <p>{y.intro}</p>}</li>)}</ul>
       </Section>
     </Base>
   );
@@ -163,6 +188,10 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
 })()}
 
 <style>
+  .sujets-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+  .sujets-liste li { padding: 20px 22px; border: 1px solid var(--c-border); border-radius: var(--radius-lg); background: var(--c-surface); display: flex; flex-direction: column; gap: 6px; }
+  .sujets-liste a { font-weight: 700; font-size: 19px; text-decoration: underline; text-underline-offset: 3px; }
+  .sujets-liste p { font-size: 15px; color: var(--c-text-body); }
   .filtres, .pagination { display: flex; flex-wrap: wrap; gap: 8px; }
   .filtres a, .pagination a { padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid var(--c-border); color: var(--c-text); font-size: var(--fs-base); }
   .filtres a[aria-current], .pagination a[aria-current] { background: var(--c-ink); border-color: var(--c-ink); color: #fff; }

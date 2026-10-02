@@ -1,5 +1,7 @@
 import { z } from 'astro/zod';
 import { section } from './blocs';
+import { champSujets } from './sujets';
+import parcours from '../../data/parcours.json' with { type: 'json' };
 
 export const page = z
   .object({
@@ -23,6 +25,12 @@ export const page = z
       .enum(['aimant', 'seo'])
       .optional()
       .describe("aimant : page que le visiteur a envie d'ouvrir (prix, guide, avant/après, aides), cible des liens d'engagement. seo : page d'entrée depuis Google, doit renvoyer vers une page aimant."),
+    publics: z
+      .array(z.enum(Object.keys(parcours) as [string, ...string[]]))
+      .max(6)
+      .default([])
+      .describe('Parcours où cette page apparaît (je viens d\'arriver, je suis parent… : data/parcours.json)'),
+    sujets: champSujets,
     gabarit: z.enum(['standard', 'pleine-largeur', 'landing']).default('standard'),
     fil_ariane: z.boolean().optional(),
     brief: z.string().max(2000).optional().describe('Demande d\'origine, conservée pour retoucher la page'),

@@ -6,4 +6,5 @@ date: 2026-09-15
 resume: "Le conseil municipal fixe les tarifs de la cantine scolaire, avec un tarif réduit selon le quotient familial."
 fichier: /img/actes/deliberation-2026-018-tarifs-cantine.pdf
 categorie: vie-municipale
+sujets: [ecole, conseil-municipal]
 ---

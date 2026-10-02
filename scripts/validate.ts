@@ -23,6 +23,8 @@ import alerteDonnees from '../data/alerte.json' with { type: 'json' };
 import collectesDonnees from '../data/collectes.json' with { type: 'json' };
 import parcoursDonnees from '../data/parcours.json' with { type: 'json' };
 import { alerte } from '../src/schemas/alerte';
+import sujetsDonnees from '../data/sujets.json' with { type: 'json' };
+import { sujetsFichier } from '../src/schemas/sujets';
 import { formulaires as formulairesSchema } from '../src/schemas/formulaires';
 import { tarifs as tarifsSchema } from '../src/schemas/tarifs';
 import { manquesLegal } from '../src/lib/legal';
@@ -204,6 +206,13 @@ for (const p of pages) {
   }
 }
 for (const nom of nomsCollections) for (const e of collections[nom]) verifierContenu(e.fichier, { ...e.data, corps: e.corps }, estPublie(e), e);
+
+// Sujets : fichier valide ; sujet défini mais porté par aucun contenu publié (sa page n'existe pas)
+{
+  const r = sujetsFichier.safeParse(sujetsDonnees);
+  if (!r.success) for (const i of r.error.issues) signaler('erreur', 'data/sujets.json', i.path as any, i.message);
+  else for (const s of r.data.sujets) if (!index.get(`/sujets/${s.id}`)?.publie) signaler('avertissement', 'data/sujets.json', s.id, `sujet « ${s.libelle} » porté par aucun contenu publié : pas de page /sujets/${s.id}`);
+}
 
 // Albums : droit à l'image vérifié avant publication
 for (const e of collections.albums ?? []) {

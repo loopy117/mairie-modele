@@ -5,4 +5,5 @@ horaire: 11 h
 lieu: Monument aux morts
 categorie: vie-municipale
 resume: Commémoration de l'Armistice, suivie d'un verre de l'amitié à la salle des fêtes.
+sujets: [fetes]
 ---

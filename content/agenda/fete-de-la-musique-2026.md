@@ -6,4 +6,5 @@ lieu: Place de la Mairie
 organisateur: Association Musiques en village
 categorie: culture-loisirs
 resume: Concerts en plein air et scène ouverte.
+sujets: [fetes]
 ---

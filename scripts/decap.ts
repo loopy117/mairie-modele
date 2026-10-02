@@ -18,6 +18,8 @@ import { page } from '../src/schemas/page';
 import { reglages } from '../src/lib/collections';
 import taxonomies from '../data/taxonomies.json' with { type: 'json' };
 import site from '../data/site.json' with { type: 'json' };
+import parcoursDonnees from '../data/parcours.json' with { type: 'json' };
+import { SUJETS } from '../src/schemas/sujets';
 import { TYPES_ENTREPRISE, JOURS } from '../src/schemas/site';
 import { tarifs as tarifsSchema } from '../src/schemas/tarifs';
 
@@ -121,7 +123,12 @@ function champ(nom: string, s: any, requis: boolean): any {
     case 'array': {
       const it = s.items ?? {};
       const lim = { ...(s.minItems ? { min: s.minItems } : {}), ...(s.maxItems ? { max: s.maxItems } : {}) };
-      if (it.enum) return { ...base, widget: 'select', multiple: true, options: it.enum, ...lim };
+      if (it.enum) {
+        // Listes à libellés : sujets (data/sujets.json) et publics (data/parcours.json)
+        const lib: Record<string, string> = nom === 'sujets' ? Object.fromEntries(Object.entries(SUJETS).map(([k, v]) => [k, v.libelle]))
+          : nom === 'publics' ? Object.fromEntries(Object.entries(parcoursDonnees as Record<string, { titre: string }>).map(([k, v]) => [k, v.titre])) : {};
+        return { ...base, widget: 'select', multiple: true, options: it.enum.map((v: string) => (lib[v] ? { label: lib[v], value: v } : v)), ...lim };
+      }
       if (estImage(it)) return {
         ...base, widget: 'list', ...lim, summary: '{{fields.image.alt}}',
         field: {
@@ -202,6 +209,17 @@ const entreeNav = (avecEnfants: boolean): any[] => [
 const reglagesSite = {
   name: 'reglages', label: 'Réglages du site', editor: { preview: false },
   files: [
+    {
+      name: 'sujets', label: 'Sujets (mots-clés)', file: 'data/sujets.json',
+      description: "Liste des sujets que l'on peut attacher aux pages et aux fiches. Chaque sujet a sa page (/sujets/…) qui rassemble tout ce qui le porte. Un nouveau sujet est proposé dans les fiches après la mise en ligne suivante.",
+      fields: [
+        { name: 'sujets', label: 'Sujets', widget: 'list', summary: '{{fields.libelle}}', fields: [
+          { name: 'libelle', label: 'Nom affiché', widget: 'string', pattern: ['^.{2,40}$', '2 à 40 caractères'] },
+          { name: 'id', label: 'Identifiant (adresse /sujets/…)', widget: 'string', pattern: ['^[a-z0-9]+(-[a-z0-9]+)*$', 'minuscules sans accent, mots séparés par des tirets'], hint: 'Ex. conseil-municipal. Ne plus le changer une fois le sujet utilisé.' },
+          { name: 'intro', label: 'Introduction de la page du sujet', widget: 'text', required: false, pattern: ['^[\\s\\S]{0,220}$', '220 caractères maximum'] },
+        ] },
+      ],
+    },
     {
       name: 'alerte', label: "Alerte (bandeau en haut de toutes les pages)", file: 'data/alerte.json',
       description: "Coupure d'eau, vigilance météo, route fermée… Réservé aux administrateurs ; disparaît d'elle-même après la date de fin.",

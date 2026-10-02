@@ -26,6 +26,10 @@
         {
           "collection": "projets",
           "label": "Projets en cours"
+        },
+        {
+          "page": "/sujets",
+          "label": "Tous les sujets"
         }
       ]
     },

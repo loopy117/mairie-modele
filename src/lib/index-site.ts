@@ -4,6 +4,7 @@
  */
 import { reglages, categoriesArchive } from './collections';
 import parcours from '../../data/parcours.json' with { type: 'json' };
+import { SUJETS } from '../schemas/sujets';
 import { urlPage, urlElement, urlArchive, urlCategorie } from './urls';
 import { estPublie, type Element } from './requete';
 import type { NomCollection } from '../schemas/collections';
@@ -38,10 +39,20 @@ export function construireIndex(pages: Element[], collections: Record<NomCollect
   index.set('/aujourdhui', { url: '/aujourdhui', titre: "Aujourd'hui dans la commune", publie: true, type: 'page' });
   index.set('/recherche', { url: '/recherche', titre: 'Rechercher dans le site', publie: true, type: 'page' });
   if ((collections as any).lieux?.some((e: Element) => estPublie(e) && e.data.latitude != null)) index.set('/carte', { url: '/carte', titre: 'Carte de la commune', publie: true, type: 'page' });
+  // Parcours et sujets : publiés dès qu'un contenu publié (pages comprises) les porte
+  const porte = (champ: 'publics' | 'sujets', v: string) =>
+    pages.some((p) => p.data.statut !== 'brouillon' && (p.data[champ] ?? []).includes(v)) ||
+    Object.values(collections).some((l) => l.some((e) => estPublie(e) && (e.data[champ] ?? []).includes(v)));
   for (const [slug, p] of Object.entries(parcours)) {
-    const publie = Object.values(collections).some((l) => l.some((e) => estPublie(e) && (e.data.publics ?? []).includes(slug)));
-    index.set(`/parcours/${slug}`, { url: `/parcours/${slug}`, titre: p.titre, publie, type: 'page' });
+    index.set(`/parcours/${slug}`, { url: `/parcours/${slug}`, titre: p.titre, publie: porte('publics', slug), type: 'page' });
   }
+  let unSujet = false;
+  for (const [id, x] of Object.entries(SUJETS)) {
+    const publie = porte('sujets', id);
+    unSujet ||= publie;
+    index.set(`/sujets/${id}`, { url: `/sujets/${id}`, titre: x.libelle, publie, type: 'page' });
+  }
+  index.set('/sujets', { url: '/sujets', titre: 'Tous les sujets', publie: unSujet, type: 'page' });
   return index;
 }
 

@@ -9,5 +9,6 @@ lieu: Rue des Tilleuls
 latitude: 44.9002
 longitude: 5.0029
 resume: "380 mètres de canalisations remplacées : fini les fuites à répétition dans le quartier."
+sujets: [eau, voirie]
 ---
 Les travaux sont terminés et la chaussée a été refaite. Merci aux riverains pour leur patience.

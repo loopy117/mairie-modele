@@ -13,6 +13,7 @@ mis_en_avant: true
 publics: [parent, nouvel-habitant]
 documents:
   - { titre: Avant-projet sommaire, fichier: /img/projets/ecole-renovation-avant-projet.pdf }
+sujets: [ecole]
 ---
 Les travaux se déroulent en deux tranches pour que l'école reste ouverte : l'aile de la cantine pendant l'été 2026, les classes pendant les vacances de 2027.
 
