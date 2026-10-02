@@ -1,6 +1,6 @@
 import { z } from 'astro/zod';
 import { section } from './blocs';
-import { champSujets } from './sujets';
+import { champSujets, champDiffuser, champLettre } from './sujets';
 import parcours from '../../data/parcours.json' with { type: 'json' };
 
 export const page = z
@@ -31,6 +31,8 @@ export const page = z
       .default([])
       .describe('Parcours où cette page apparaît (je viens d\'arriver, je suis parent… : data/parcours.json)'),
     sujets: champSujets,
+    diffuser: champDiffuser,
+    lettre: champLettre,
     gabarit: z.enum(['standard', 'pleine-largeur', 'landing']).default('standard'),
     fil_ariane: z.boolean().optional(),
     brief: z.string().max(2000).optional().describe('Demande d\'origine, conservée pour retoucher la page'),

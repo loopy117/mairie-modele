@@ -5,6 +5,7 @@ categorie: enfance-jeunesse
 resume: "Une nouvelle classe de maternelle, une cour rénovée et une cantine qui sert désormais 40 % de produits locaux."
 publics: [parent]
 sujets: [ecole]
+lettre: true
 ---
 L'école des Platanes a accueilli **112 élèves** pour cette rentrée, répartis en cinq classes. Une nouvelle classe de maternelle a ouvert, et la cour a été entièrement rénovée cet été.
 

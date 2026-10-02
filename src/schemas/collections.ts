@@ -1,7 +1,7 @@
 import { z } from 'astro/zod';
 import { image, metier } from './communs';
 import parcours from '../../data/parcours.json' with { type: 'json' };
-import { champSujets } from './sujets';
+import { champSujets, champDiffuser, champLettre } from './sujets';
 
 const seo = z
   .object({
@@ -38,6 +38,8 @@ const communs = {
     .default([])
     .describe('Parcours où cette fiche apparaît (je viens d\'arriver, je suis parent… : data/parcours.json)'),
   sujets: champSujets,
+  diffuser: champDiffuser,
+  lettre: champLettre,
   /** Sections facultatives ajoutées après le corps sur la page de détail (validées par le schéma de page). */
   sections: z.array(z.any()).optional(),
 };

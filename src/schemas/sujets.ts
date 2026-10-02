@@ -31,3 +31,15 @@ export const champSujets = z
   .max(8)
   .default([])
   .describe('Sujets (mots-clés) : la fiche apparaît sur la page de chaque sujet. Liste gérée dans Réglages › Sujets.');
+
+/** Diffusion après publication : réseaux où proposer un message (espace client › Diffuser), lettre d'information. */
+export const RESEAUX = ['facebook', 'instagram', 'linkedin'] as const;
+export const champDiffuser = z
+  .array(z.enum(RESEAUX))
+  .max(3)
+  .default([])
+  .describe('Après la mise en ligne, l\'espace client prépare un message pour ces réseaux (à relire et publier vous-même)');
+export const champLettre = z
+  .boolean()
+  .default(false)
+  .describe('Proposer cette publication dans la prochaine lettre d\'information (espace client › Lettre d\'information)');

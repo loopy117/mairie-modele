@@ -71,6 +71,7 @@ const MASQUES: Record<string, string[]> = {
 const MARKDOWN = new Set(['contenu', 'reponse', 'body']);
 const OPTIONS: Record<string, string> = { ...AVANCEMENTS, ...THEMES_INFOS, ...TYPES_LIEUX, ...TYPES_ACTES, ...TYPES_ANNUAIRE, ...(taxonomies.metiers as Record<string, string>) };
 Object.assign(LIBELLES, {
+  diffuser: 'Diffuser sur les réseaux', lettre: "Lettre d'information", sujets: 'Sujets', publics: 'Parcours (publics)',
   photos: 'Photos', legende: 'Légende', credit: 'Crédit photo', autorisations: "Droit à l'image vérifié",
   categorie: 'Thème', type: 'Nature', numero: 'Numéro', fichier: 'Document (PDF)', date_fin: 'Date de fin', horaire: 'Horaire', lieu: 'Lieu',
   organisateur: 'Organisé par', pieces: 'Pièces à fournir', contact: "Où s'adresser", adresse: 'Adresse', telephone: 'Téléphone', email: 'E-mail',
@@ -135,7 +136,7 @@ function champ(nom: string, s: any, requis: boolean): any {
       const lim = { ...(s.minItems ? { min: s.minItems } : {}), ...(s.maxItems ? { max: s.maxItems } : {}) };
       if (it.enum) {
         // Listes à libellés : sujets (data/sujets.json) et publics (data/parcours.json)
-        const lib: Record<string, string> = nom === 'sujets' ? Object.fromEntries(Object.entries(SUJETS).map(([k, v]) => [k, v.libelle]))
+        const lib: Record<string, string> = nom === 'diffuser' ? { facebook: 'Facebook', instagram: 'Instagram', linkedin: 'LinkedIn' } : nom === 'sujets' ? Object.fromEntries(Object.entries(SUJETS).map(([k, v]) => [k, v.libelle]))
           : nom === 'publics' ? Object.fromEntries(Object.entries(parcoursDonnees as Record<string, { titre: string }>).map(([k, v]) => [k, v.titre])) : {};
         return { ...base, widget: 'select', multiple: true, options: it.enum.map((v: string) => (lib[v] ? { label: lib[v], value: v } : v)), ...lim };
       }

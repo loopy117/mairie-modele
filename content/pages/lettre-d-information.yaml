@@ -1,0 +1,14 @@
+titre: Lettre d'information
+statut: publie
+seo:
+  titre: Lettre d'information de la commune
+  description: "Inscrivez-vous à la lettre d'information de la commune : les actualités, les rendez-vous et les décisions municipales, directement dans votre boîte mail."
+sections:
+  - block: hero
+    variant: minimal
+    surtitre: Restez informé
+    titre: Lettre d'information
+    texte: "Les actualités, les rendez-vous et les décisions de la commune, directement dans votre boîte mail. Gratuit, sans publicité, désinscription en un clic."
+  - block: lettre
+    titre: Je m'inscris
+    texte: "Après votre inscription, vous recevez un e-mail : cliquez sur le lien qu'il contient pour confirmer."

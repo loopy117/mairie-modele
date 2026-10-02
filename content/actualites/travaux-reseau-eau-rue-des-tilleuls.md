@@ -4,6 +4,8 @@ date: 2026-09-24
 categorie: travaux-urbanisme
 resume: "Du 5 au 23 octobre, les canalisations de la rue des Tilleuls sont remplacées : circulation alternée et coupures d'eau possibles le matin."
 sujets: [eau, voirie]
+diffuser: [facebook]
+lettre: true
 ---
 Les canalisations d'eau potable de la rue des Tilleuls, posées dans les années 1960, vont être remplacées **du 5 au 23 octobre 2026**.
 

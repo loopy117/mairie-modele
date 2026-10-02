@@ -5,6 +5,8 @@ categorie: culture-loisirs
 resume: "Vingt associations et près de 300 visiteurs : le forum a permis de découvrir les activités sportives et culturelles de la commune."
 publics: [association, nouvel-habitant]
 sujets: [fetes]
+diffuser: [facebook, instagram]
+lettre: true
 ---
 Le forum des associations a réuni **vingt associations** et près de 300 visiteurs à la salle des fêtes.
 

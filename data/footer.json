@@ -66,6 +66,10 @@
       "titre": "Participer",
       "liens": [
         {
+          "page": "/lettre-d-information",
+          "label": "Lettre d'information"
+        },
+        {
           "page": "/signaler",
           "label": "Signaler un problème"
         },

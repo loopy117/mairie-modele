@@ -1,0 +1,70 @@
+---
+/**
+ * Inscription à la lettre d'information : l'adresse part chez Brevo (serveur, /xmedia-ai/lettre.php), qui envoie
+ * un e-mail de confirmation (double opt-in). Fonctionne sans JavaScript : le serveur renvoie sur la page avec
+ * #lettre-ok ou #lettre-erreur, et le message correspondant s'affiche par :target.
+ */
+import Section from '../components/Section.astro';
+const { background, spacing, id = 'lettre', titre = "Recevez la lettre d'information", texte } = Astro.props;
+---
+<Section {background} {spacing} {id}>
+  <div class="lt">
+    <div class="lt__texte">
+      <h2 class="lt__titre">{titre}</h2>
+      {texte && <p>{texte}</p>}
+    </div>
+    <form class="lt__form" action="/xmedia-ai/lettre.php" method="post" data-lettre novalidate>
+      <label for={`${id}-email`} class="lt__label">Votre adresse e-mail</label>
+      <div class="lt__ligne">
+        <input id={`${id}-email`} name="email" type="email" autocomplete="email" required inputmode="email" />
+        <button type="submit" class="btn btn--primaire">S'inscrire</button>
+      </div>
+      <div class="lt__piege" aria-hidden="true"><label>Site web <input name="adresse_web" type="text" tabindex="-1" autocomplete="off" /></label></div>
+      <label class="lt__accord"><input type="checkbox" name="consentement" value="1" required /> <span>J'accepte de recevoir la lettre d'information de la commune. Je peux me désinscrire à tout moment, par le lien présent dans chaque lettre (<a href="/confidentialite">données personnelles</a>).</span></label>
+      <p class="lt__etat" role="status" aria-live="polite"></p>
+      <p class="lt__msg lt__msg--ok" id="lettre-ok" tabindex="-1">Merci ! Un e-mail de confirmation vient de vous être envoyé : cliquez sur le lien qu'il contient pour valider votre inscription.</p>
+      <p class="lt__msg lt__msg--erreur" id="lettre-erreur" tabindex="-1">L'inscription n'a pas abouti : vérifiez votre adresse, cochez la case d'accord, puis réessayez.</p>
+    </form>
+  </div>
+</Section>
+<script>
+  document.querySelectorAll<HTMLFormElement>('form[data-lettre]').forEach((f) => {
+    const etat = f.querySelector<HTMLElement>('.lt__etat')!;
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const email = f.querySelector<HTMLInputElement>('input[name=email]')!;
+      const accord = f.querySelector<HTMLInputElement>('input[name=consentement]')!;
+      if (!email.validity.valid || !email.value) { etat.textContent = 'Indiquez une adresse e-mail valide.'; email.focus(); return; }
+      if (!accord.checked) { etat.textContent = 'Cochez la case pour accepter de recevoir la lettre.'; accord.focus(); return; }
+      const bouton = f.querySelector('button')!; bouton.disabled = true; etat.textContent = 'Inscription…';
+      try {
+        const r = await fetch(f.action, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ email: email.value, consentement: true, adresse_web: f.querySelector<HTMLInputElement>('input[name=adresse_web]')!.value }) });
+        const j = await r.json().catch(() => ({ ok: false, message: "L'inscription n'a pas abouti. Réessayez plus tard." }));
+        etat.textContent = j.message;
+        if (j.ok) f.reset();
+      } catch { etat.textContent = "L'inscription n'a pas abouti. Réessayez plus tard."; }
+      bouton.disabled = false;
+    });
+  });
+</script>
+<style>
+  .lt { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px 48px; align-items: center; padding: clamp(24px, 4vw, 40px); border-radius: var(--radius-xl); background: var(--c-surface-alt); }
+  :global(.bg-alt) .lt { background: var(--c-surface); }
+  .lt__titre { font-size: clamp(24px, 2.6vw, 32px); letter-spacing: -0.01em; margin-bottom: 8px; }
+  .lt__texte p { color: var(--c-text-body); }
+  .lt__form { display: flex; flex-direction: column; gap: 10px; }
+  .lt__label { font-weight: 700; }
+  .lt__ligne { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lt__ligne input { flex: 1 1 220px; min-height: 52px; padding: 10px 14px; font: inherit; border: 2px solid var(--c-border); border-radius: var(--radius-sm); background: #fff; }
+  .lt__ligne input:focus-visible { outline: 3px solid var(--c-link); outline-offset: 2px; }
+  .lt__accord { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--c-text-body); }
+  .lt__accord input { width: 20px; height: 20px; margin-top: 1px; flex: none; accent-color: var(--c-primary); }
+  .lt__accord a { text-decoration: underline; }
+  .lt__piege { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .lt__etat { font-weight: 600; min-height: 1.5em; }
+  .lt__etat:empty { min-height: 0; }
+  .lt__msg { display: none; font-weight: 600; padding: 10px 14px; border-radius: var(--radius-sm); border-left: 4px solid var(--c-primary); background: #fff; }
+  .lt__msg--erreur { border-left-color: #b42318; }
+  .lt__msg:target { display: block; scroll-margin-top: 40vh; }
+</style>

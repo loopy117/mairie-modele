@@ -339,8 +339,22 @@ export const carte = z
     eviter: "Plus d'une carte par page ; une carte sur une page de service (le lien Itinéraire du contact suffit).",
   });
 
-export const blocs = { hero, texte, 'texte-image': texteImage, features, galerie, slider, cta: ctaBloc, faq, chiffres, formulaire, boucle, tarifs: tarifsBloc, legal, carte } as const;
+export const lettre = z
+  .object({
+    block: z.literal('lettre'),
+    ...optionsCommunes,
+    titre: z.string().max(80).default('Recevez la lettre d\'information'),
+    texte: z.string().max(220).optional().describe('Ex. « Une fois par mois, les nouvelles de la commune dans votre boîte mail. »'),
+  })
+  .strict()
+  .meta({
+    role: 'Inscription à la lettre d\'information (e-mail, consentement, confirmation par e-mail via Brevo).',
+    quand: 'Page « Lettre d\'information », bas de l\'accueil.',
+    eviter: 'Plusieurs formulaires d\'inscription sur la même page.',
+  });
+
+export const blocs = { hero, texte, 'texte-image': texteImage, features, galerie, slider, cta: ctaBloc, faq, chiffres, formulaire, boucle, tarifs: tarifsBloc, legal, carte, lettre } as const;
 export type NomBloc = keyof typeof blocs;
 
-export const section = z.discriminatedUnion('block', [hero, texte, texteImage, features, galerie, slider, ctaBloc, faq, chiffres, formulaire, boucle, tarifsBloc, legal, carte]);
+export const section = z.discriminatedUnion('block', [hero, texte, texteImage, features, galerie, slider, ctaBloc, faq, chiffres, formulaire, boucle, tarifsBloc, legal, carte, lettre]);
 export type Section = z.infer<typeof section>;

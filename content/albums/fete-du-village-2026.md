@@ -12,5 +12,6 @@ photos:
   - { src: /img/albums/fete-du-village-2026/illustration-05.jpg, alt: "" }
   - { src: /img/albums/fete-du-village-2026/illustration-06.jpg, alt: "Les jardins en contrebas de la mairie" }
 sujets: [fetes]
+diffuser: [facebook, instagram]
 ---
 Merci à toutes les associations et aux bénévoles qui ont fait de cette journée une réussite.

@@ -1,0 +1,13 @@
+titre: Inscription confirmée
+statut: publie
+seo:
+  titre: Inscription confirmée
+  description: "Votre inscription à la lettre d'information de la commune est confirmée. Vous recevrez la prochaine lettre dans votre boîte mail. Merci de votre intérêt."
+  noindex: true
+sections:
+  - block: hero
+    variant: minimal
+    titre: Inscription confirmée
+    texte: "Merci ! Vous recevrez la prochaine lettre d'information de la commune. Vous pourrez vous désinscrire à tout moment par le lien présent dans chaque lettre."
+    ctas:
+      - { label: Retour à l'accueil, href: /, style: primaire }

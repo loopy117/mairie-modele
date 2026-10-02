@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "validate": "tsx scripts/validate.ts",
     "catalogue": "tsx scripts/catalogue.ts",
-    "build": "npm run validate && npm run contexte && npm run decap && astro build && npm run maillage && node scripts/copier-medias.mjs && node scripts/phototheque.mjs && node scripts/recherche.mjs && node scripts/partage.mjs images && node scripts/indexnow.mjs preparer",
+    "build": "npm run validate && npm run contexte && npm run decap && astro build && npm run maillage && node scripts/copier-medias.mjs && node scripts/phototheque.mjs && node scripts/recherche.mjs && node scripts/partage.mjs images && tsx scripts/diffusion.ts && node scripts/indexnow.mjs preparer",
     "preview": "astro preview",
     "photos": "tsx scripts/photos.ts",
     "import-media": "tsx scripts/import-media.ts",
@@ -16,7 +16,8 @@
     "test": "tsx scripts/test-maillage.ts",
     "maillage": "tsx scripts/maillage.ts",
     "recherche": "node scripts/recherche.mjs",
-    "phototheque": "node scripts/phototheque.mjs"
+    "phototheque": "node scripts/phototheque.mjs",
+    "diffusion": "tsx scripts/diffusion.ts"
   },
   "dependencies": {
     "@fontsource-variable/bitter": "^5.3.0",
