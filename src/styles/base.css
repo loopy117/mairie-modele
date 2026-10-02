@@ -39,7 +39,6 @@ p { text-wrap: pretty; }
 .prose table { width: 100%; border-collapse: collapse; font-size: 0.95em; font-variant-numeric: tabular-nums; }
 .prose th, .prose td { padding: 10px 12px; border-bottom: 1px solid var(--c-border); text-align: left; vertical-align: top; }
 .prose th { color: var(--c-text); font-weight: 700; border-bottom-width: 2px; }
-.prose td:not(:first-child), .prose th:not(:first-child) { text-align: right; white-space: nowrap; }
 .on-dark .prose, .on-dark .prose h2, .on-dark .prose h3, .on-dark .prose strong { color: var(--c-on-dark); }
 
 /* Titres de section sur fond sombre (tous blocs) */
