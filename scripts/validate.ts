@@ -167,7 +167,7 @@ function verifierContenu(fichier: string, donnees: any, publie: boolean, courant
       imagesUtilisees.add(f);
       if (!existsSync(join(RACINE, f))) signaler('erreur', fichier, [...chemin, 'src'], `image introuvable : ${f}`);
       if (/provisoire/.test(f) && publie) provisoires.add(f);
-      if (v.alt === '' ) signaler('avertissement', fichier, [...chemin, 'alt'], 'image marquée décorative (alt vide) : à confirmer');
+      if (v.alt === '' && !chemin.includes('photos')) signaler('avertissement', fichier, [...chemin, 'alt'], 'image marquée décorative (alt vide) : à confirmer');   // albums : texte par défaut « titre, photo n »
     }
     if (v && typeof v === 'object' && v.block === 'boucle') {
       const txt = JSON.stringify(v);
@@ -205,6 +205,11 @@ for (const p of pages) {
 }
 for (const nom of nomsCollections) for (const e of collections[nom]) verifierContenu(e.fichier, { ...e.data, corps: e.corps }, estPublie(e), e);
 
+// Albums : droit à l'image vérifié avant publication
+for (const e of collections.albums ?? []) {
+  if (estPublie(e) && !e.data.autorisations) signaler('erreur', e.fichier, 'autorisations', "album publié sans droit à l'image vérifié : cocher « Droit à l'image vérifié » une fois les accords obtenus (personnes reconnaissables, parents des enfants), ou laisser l'album en brouillon");
+}
+
 // Doublons SEO
 const vus = new Map<string, string>();
 for (const p of pages.filter((p) => p.data.statut === 'publie')) {
@@ -219,6 +224,9 @@ for (const p of pages.filter((p) => p.data.statut === 'publie')) {
 for (const f of lister(join(RACINE, 'media'), '')) {
   const r = rel(f);
   if (/\.(jpe?g|png|webp)$/i.test(r) && !imagesUtilisees.has(r)) signaler('avertissement', r, '', 'image non référencée');
+  // Originaux : réduits à l'envoi par l'éditeur (serveur) et par npm run import-media ; au-delà, le dépôt et le build s'alourdissent
+  const poids = statSync(f).size;
+  if (/\.(jpe?g|webp)$/i.test(r) && poids > 3_000_000) signaler('avertissement', r, '', `photo lourde (${(poids / 1e6).toFixed(1)} Mo) : la réimporter avec npm run import-media (3200 px, sans métadonnées)`);
 }
 if (provisoires.size) signaler('avertissement', 'media/', '', `${provisoires.size} image(s) provisoire(s) sur des contenus publiés : à remplacer par les vraies photos`);
 

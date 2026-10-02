@@ -3,36 +3,88 @@
     {
       "titre": "Vivre à Saint-Exemple",
       "liens": [
-        { "page": "/aujourdhui", "label": "Aujourd'hui dans la commune" },
-        { "collection": "infos", "label": "Infos pratiques" },
-        { "collection": "annuaire", "label": "Annuaire" },
-        { "page": "/carte", "label": "Carte de la commune" },
-        { "collection": "projets", "label": "Projets en cours" }
+        {
+          "page": "/aujourdhui",
+          "label": "Aujourd'hui dans la commune"
+        },
+        {
+          "collection": "infos",
+          "label": "Infos pratiques"
+        },
+        {
+          "collection": "annuaire",
+          "label": "Annuaire"
+        },
+        {
+          "collection": "albums",
+          "label": "Albums photo"
+        },
+        {
+          "page": "/carte",
+          "label": "Carte de la commune"
+        },
+        {
+          "collection": "projets",
+          "label": "Projets en cours"
+        }
       ]
     },
     {
       "titre": "Je suis…",
       "liens": [
-        { "page": "/parcours/nouvel-habitant", "label": "Je viens d'arriver" },
-        { "page": "/parcours/parent", "label": "Je suis parent" },
-        { "page": "/parcours/senior", "label": "Je suis senior" },
-        { "page": "/parcours/travaux", "label": "Je veux faire des travaux" },
-        { "page": "/parcours/association", "label": "Je suis une association" },
-        { "page": "/parcours/entreprise", "label": "Je crée une entreprise" }
+        {
+          "page": "/parcours/nouvel-habitant",
+          "label": "Je viens d'arriver"
+        },
+        {
+          "page": "/parcours/parent",
+          "label": "Je suis parent"
+        },
+        {
+          "page": "/parcours/senior",
+          "label": "Je suis senior"
+        },
+        {
+          "page": "/parcours/travaux",
+          "label": "Je veux faire des travaux"
+        },
+        {
+          "page": "/parcours/association",
+          "label": "Je suis une association"
+        },
+        {
+          "page": "/parcours/entreprise",
+          "label": "Je crée une entreprise"
+        }
       ]
     },
     {
       "titre": "Participer",
       "liens": [
-        { "page": "/signaler", "label": "Signaler un problème" },
-        { "page": "/proposer", "label": "Proposer un événement" },
-        { "page": "/contact", "label": "Contacter la mairie" }
+        {
+          "page": "/signaler",
+          "label": "Signaler un problème"
+        },
+        {
+          "page": "/proposer",
+          "label": "Proposer un événement"
+        },
+        {
+          "page": "/contact",
+          "label": "Contacter la mairie"
+        }
       ]
     }
   ],
   "legal": [
-    { "page": "/mentions-legales" },
-    { "page": "/confidentialite" },
-    { "page": "/accessibilite" }
+    {
+      "page": "/mentions-legales"
+    },
+    {
+      "page": "/confidentialite"
+    },
+    {
+      "page": "/accessibilite"
+    }
   ]
 }

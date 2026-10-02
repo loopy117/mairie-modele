@@ -7,6 +7,7 @@ import DocumentLigne from './DocumentLigne.astro';
 import ProjetCarte from './ProjetCarte.astro';
 import LieuFiche from './LieuFiche.astro';
 import InfoCarte from './InfoCarte.astro';
+import AlbumCarte from './AlbumCarte.astro';
 import type { NomCarte } from './cartes';
 
 export const composantsCartes: Record<NomCarte, any> = {
@@ -19,4 +20,5 @@ export const composantsCartes: Record<NomCarte, any> = {
   'projet-carte': ProjetCarte,
   'lieu-fiche': LieuFiche,
   'info-carte': InfoCarte,
+  'album-carte': AlbumCarte,
 };

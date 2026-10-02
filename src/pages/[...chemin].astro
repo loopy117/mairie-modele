@@ -22,6 +22,7 @@ import taxonomies from '../../data/taxonomies.json';
 import siteBrut from '../../data/site.json';
 import type { Site } from '../schemas/site';
 import FicheInfos from '../components/FicheInfos.astro';
+import Album from '../components/Album.astro';
 import { indexSite } from '../lib/site';
 
 export async function getStaticPaths() {
@@ -98,6 +99,7 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
       {props.collection !== 'demarches' && <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />}
       {aCorps && <Section largeur="etroite"><Markdown source={entree.body} /></Section>}
       {props.collection === 'demarches' && <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />}
+      {props.collection === 'albums' && <Album titre={entree.data.titre} photos={entree.data.photos} credit={entree.data.credit} />}
       {entree.data.sections && <Sections sections={entree.data.sections} courant={courant} />}
       <Sections sections={apres} courant={courant} />
     </Base>

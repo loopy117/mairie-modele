@@ -59,6 +59,11 @@ export function gabaritDetail(collection: NomCollection, e: { id: string; data: 
         avant: [hero((TYPES_LIEUX as Record<string, string>)[d.type])],
         apres: [{ block: 'boucle', background: 'alt', titre: 'Dans la même catégorie', source: 'lieux', filtre: { type: '$courant.type' }, exclure: ['$courant.id'], ordre: 'titre asc', nombre: 3, carte: 'lieu-fiche', affichage: 'grid' }],
       };
+    case 'albums':
+      return {
+        avant: [{ block: 'hero', variant: 'minimal', surtitre: ['Album photo', dateFr(d.date)].filter(Boolean).join(' · '), titre: d.titre, texte: d.resume }],
+        apres: [{ block: 'boucle', background: 'alt', titre: 'Autres albums', source: 'albums', exclure: ['$courant.id'], ordre: 'date desc', nombre: 3, carte: 'album-carte', affichage: 'grid', lien_tout_voir: { label: 'Tous les albums', href: '/albums' } }],
+      };
     case 'infos':
       return {
         avant: [hero((THEMES_INFOS as Record<string, string>)[d.theme])],

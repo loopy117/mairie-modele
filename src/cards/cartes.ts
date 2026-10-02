@@ -10,6 +10,7 @@ export const cartes = {
   'document-ligne': { collection: 'documents', description: 'Titre, date, thème et bouton de téléchargement. Avec la disposition « liste ».' },
   'projet-carte': { collection: 'projets', description: 'Image, titre, résumé, frise d\'avancement, lieu et budget.' },
   'lieu-fiche': { collection: 'lieux', description: 'Type, nom, adresse, accessibilité PMR.' },
+  'album-carte': { collection: 'albums', description: 'Photo de couverture, titre, date, nombre de photos.' },
   'info-carte': { collection: 'infos', description: 'Thème, titre, résumé.' },
 } as const satisfies Record<string, { collection: NomCollection; description: string }>;
 

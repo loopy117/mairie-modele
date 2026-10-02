@@ -13,6 +13,7 @@ Saint-Exemple est une commune **fictive** : textes, noms et documents sont des e
 | `projets` | projets municipaux suivis dans le temps (étude, concertation, voté, travaux, terminé), budget, documents, localisation | `/projets/<id>` |
 | `lieux` | lieux et équipements (mairie, école, salles, parkings, défibrillateurs…), GPS, horaires, accessibilité PMR | `/lieux/<id>` |
 | `infos` | informations pratiques : déchets, eau, transports, école, santé, cimetière, urbanisme, urgences | `/infos-pratiques/<id>` |
+| `albums` | albums photo : photos avec texte alternatif et légende, visionneuse au clavier ; publication seulement si le droit à l'image est vérifié | `/albums/<id>` |
 | `documents` | bulletins, PLU, menus de cantine (PDF) | `/documents/<id>` |
 
 - **Alerte** : `data/alerte.json` (bandeau en haut de toutes les pages, disparaît après sa date de fin). Éditeur : Réglages › Alerte.
@@ -20,6 +21,7 @@ Saint-Exemple est une commune **fictive** : textes, noms et documents sont des e
 - **Actes** : publiés par un administrateur uniquement (règle du relais de l'éditeur). La date de mise en ligne vient de l'historique Git : le déploiement clone le dépôt en entier.
 - **Vues générées** (rien à saisir) : `/aujourdhui` (alerte, mairie ouverte ou fermée d'après `horaires_detail` de `data/site.json`, collectes du jour d'après `data/collectes.json`, agenda des 15 jours, travaux en cours, dernières publications) ; `/carte` (lieux et projets géolocalisés, liste accessible + carte IGN chargée à la demande) ; `/parcours/<slug>` (fiches de toutes les collections portant le tag `publics`, parcours définis dans `data/parcours.json`).
 - **Recherche** (`/recherche`, lien dans l'en-tête) : Pagefind, index statique construit après le build (`scripts/recherche.mjs`) : texte complet des pages et des PDF (actes, documents, projets), filtres par type. Sans service extérieur ni cookie. Les listes de cartes et les pages de catégorie ne sont pas indexées (doublons).
+- **Photos** : réduites à l'envoi par le serveur (3200 px, redressées, sans EXIF ni GPS) et par `npm run import-media` ; la validation signale les originaux de plus de 3 Mo. Images optimisées gardées en cache entre deux déploiements (`.cache/astro`).
 - **Signalements** : suivi interne dans l'espace client, reçu → transmis au service → en cours → traité → clos (rien n'est publié).
 - **Thèmes** (`categorie`) : `data/taxonomies.json`.
 

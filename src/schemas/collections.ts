@@ -191,6 +191,21 @@ export const collectionSchemas = {
     .strict()
     .describe('Une information pratique : comment fonctionne la commune au quotidien (déchets, eau, transports…). Page : /infos-pratiques/<id>.'),
 
+  albums: z
+    .object({
+      ...communs,
+      date: z.coerce.date().describe('Date de l\'événement photographié'),
+      photos: z
+        .array(image.extend({ legende: z.string().max(200).optional().describe('Légende affichée sous la photo agrandie') }))
+        .min(1)
+        .max(80)
+        .describe('Photos de l\'album (80 au plus : au-delà, faire deux albums). Texte alternatif vide : « titre de l\'album, photo n ».'),
+      credit: z.string().max(80).default('© Mairie').describe('Crédit photo affiché sous l\'album'),
+      autorisations: z.boolean().default(false).describe('Droit à l\'image vérifié : les personnes reconnaissables (et les parents des enfants) ont donné leur accord. Obligatoire pour publier.'),
+    })
+    .strict()
+    .describe('Un album photo (fête, cérémonie, travaux…). Page : /albums/<id>, photos agrandies au clic. Couverture : image, sinon la première photo.'),
+
   documents: z
     .object({ ...communs, date: z.coerce.date(), fichier: document })
     .strict()

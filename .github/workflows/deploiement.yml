@@ -79,6 +79,14 @@ jobs:
       # Espace client, formulaire et connexion de l'éditeur : code commun du serveur
       # xmediacreation (/opt/xmedia-commun, dépôt xmedia-serveur), plus rien à installer ici.
 
+      # Images déjà optimisées (AVIF, WebP) gardées d'un déploiement à l'autre : seules les nouvelles sont traitées
+      - name: Cache des images optimisées
+        uses: actions/cache@v4
+        with:
+          path: .cache/astro
+          key: images-${{ hashFiles('media/**') }}
+          restore-keys: images-
+
       - name: Valider et construire
         run: npm run build
         env:

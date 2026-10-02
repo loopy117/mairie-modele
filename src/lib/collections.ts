@@ -57,6 +57,10 @@ export const reglages: Record<NomCollection, ReglagesCollection> = {
     base: '/lieux', libelle: 'Lieux et équipements', detail: true,
     archive: { titre: 'Lieux et équipements', intro: 'Salles, écoles, équipements sportifs, parkings, défibrillateurs : adresses, horaires et accessibilité.', carte: 'lieu-fiche', affichage: 'grid', options: { colonnes: 3 }, ordre: 'titre asc', parPage: 80, parCategorie: true, regrouperPar: { champ: 'type', libelles: TYPES_LIEUX, titre: 'Filtrer par type' } },
   },
+  albums: {
+    base: '/albums', libelle: 'Albums photo', detail: true,
+    archive: { titre: 'Albums photo', intro: 'Les fêtes, cérémonies et grands moments de la commune en images.', carte: 'album-carte', affichage: 'grid', options: { colonnes: 3 }, ordre: 'date desc', parPage: 12, parCategorie: false },
+  },
   infos: {
     base: '/infos-pratiques', libelle: 'Infos pratiques', detail: true,
     archive: { titre: 'Infos pratiques', intro: 'Déchets, eau, transports, école, santé : comment fonctionne la commune au quotidien.', carte: 'info-carte', affichage: 'grid', options: { colonnes: 3 }, ordre: ['ordre asc', 'titre asc'], parPage: 60, parCategorie: true, regrouperPar: { champ: 'theme', libelles: THEMES_INFOS, titre: 'Filtrer par thème' } },

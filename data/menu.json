@@ -1,29 +1,72 @@
 {
   "principal": [
-    { "page": "/aujourdhui", "label": "Aujourd'hui" },
-    { "collection": "actualites", "label": "Actualités" },
-    { "collection": "agenda", "label": "Agenda" },
-    { "collection": "demarches", "label": "Démarches" },
+    {
+      "page": "/aujourdhui",
+      "label": "Aujourd'hui"
+    },
+    {
+      "collection": "actualites",
+      "label": "Actualités"
+    },
+    {
+      "collection": "agenda",
+      "label": "Agenda"
+    },
+    {
+      "collection": "demarches",
+      "label": "Démarches"
+    },
     {
       "collection": "infos",
       "label": "Vivre à Saint-Exemple",
       "enfants": [
-        { "collection": "infos", "label": "Infos pratiques" },
-        { "collection": "annuaire", "label": "Annuaire" },
-        { "page": "/carte", "label": "Carte de la commune" },
-        { "collection": "projets", "label": "Projets en cours" }
+        {
+          "collection": "infos",
+          "label": "Infos pratiques"
+        },
+        {
+          "collection": "annuaire",
+          "label": "Annuaire"
+        },
+        {
+          "page": "/carte",
+          "label": "Carte de la commune"
+        },
+        {
+          "collection": "projets",
+          "label": "Projets en cours"
+        },
+        {
+          "collection": "albums",
+          "label": "Albums photo"
+        }
       ]
     },
     {
       "page": "/la-mairie",
       "label": "La mairie",
       "enfants": [
-        { "page": "/la-mairie", "label": "Élus et services" },
-        { "collection": "actes", "label": "Actes officiels" },
-        { "collection": "documents", "label": "Documents" },
-        { "page": "/contact", "label": "Contact" }
+        {
+          "page": "/la-mairie",
+          "label": "Élus et services"
+        },
+        {
+          "collection": "actes",
+          "label": "Actes officiels"
+        },
+        {
+          "collection": "documents",
+          "label": "Documents"
+        },
+        {
+          "page": "/contact",
+          "label": "Contact"
+        }
       ]
     }
   ],
-  "bouton": { "label": "Signaler un problème", "href": "/signaler" }
+  "bouton": {
+    "label": "Signaler un problème",
+    "href": "/signaler"
+  }
 }
