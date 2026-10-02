@@ -61,9 +61,16 @@
       const s = document.createElement('script'); s.src = 'decap/decap-cms.js';
       s.onload = () => {
         const demarrer = () => (window.initCMS || window.CMS.init)(config ? { config } : undefined);
-        const p = document.createElement('script'); p.src = 'phototheque.js';
-        p.onload = demarrer; p.onerror = demarrer;   // sans photothèque, l'éditeur s'ouvre quand même
-        document.body.appendChild(p);
+        // Widgets de l'agence (photothèque, position sur la carte), chargés l'un après l'autre ; sans eux, l'éditeur s'ouvre quand même
+        const widgets = ['phototheque.js', 'position.js'];
+        const suivant = () => {
+          const src = widgets.shift();
+          if (!src) return demarrer();
+          const w = document.createElement('script'); w.src = src;
+          w.onload = suivant; w.onerror = suivant;
+          document.body.appendChild(w);
+        };
+        suivant();
       };
       document.body.appendChild(s);
     })();

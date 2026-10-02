@@ -10,3 +10,4 @@ public/admin/config.yml
 public/admin/config.json
 ai/maillage.json
 .cache/
+public/admin/leaflet/

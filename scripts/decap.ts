@@ -13,7 +13,7 @@ import { join, relative } from 'node:path';
 import { stringify } from 'yaml';
 import { z } from 'astro/zod';
 import { blocs } from '../src/schemas/blocs';
-import { collectionSchemas, TYPES_ACTES, TYPES_ANNUAIRE } from '../src/schemas/collections';
+import { collectionSchemas, TYPES_ACTES, TYPES_ANNUAIRE, TYPES_LIEUX, AVANCEMENTS, THEMES_INFOS } from '../src/schemas/collections';
 import { page } from '../src/schemas/page';
 import { reglages } from '../src/lib/collections';
 import taxonomies from '../data/taxonomies.json' with { type: 'json' };
@@ -69,7 +69,7 @@ const MASQUES: Record<string, string[]> = {
   formulaire: ['champs', 'obligatoires'],
 };
 const MARKDOWN = new Set(['contenu', 'reponse', 'body']);
-const OPTIONS: Record<string, string> = { ...TYPES_ACTES, ...TYPES_ANNUAIRE, ...(taxonomies.metiers as Record<string, string>) };
+const OPTIONS: Record<string, string> = { ...AVANCEMENTS, ...THEMES_INFOS, ...TYPES_LIEUX, ...TYPES_ACTES, ...TYPES_ANNUAIRE, ...(taxonomies.metiers as Record<string, string>) };
 Object.assign(LIBELLES, {
   photos: 'Photos', legende: 'Légende', credit: 'Crédit photo', autorisations: "Droit à l'image vérifié",
   categorie: 'Thème', type: 'Nature', numero: 'Numéro', fichier: 'Document (PDF)', date_fin: 'Date de fin', horaire: 'Horaire', lieu: 'Lieu',
@@ -89,6 +89,16 @@ function champ(nom: string, s: any, requis: boolean): any {
   if (s.anyOf) {
     const sansNull = s.anyOf.filter((x: any) => x.type !== 'null');
     return champ(nom, { ...sansNull[0], description: s.description, default: s.default }, requis);
+  }
+  // Position sur la carte : recherche d'adresse et mini-carte (public/admin/position.js)
+  if (nom === 'position' && s.type === 'object') {
+    return {
+      ...base, widget: 'position', collapsed: false, ville: site.adresse?.ville ?? '', code_postal: site.adresse?.code_postal ?? '',
+      fields: [
+        { name: 'latitude', label: 'Latitude', widget: 'number', value_type: 'float', required: false, min: -90, max: 90 },
+        { name: 'longitude', label: 'Longitude', widget: 'number', value_type: 'float', required: false, min: -180, max: 180 },
+      ],
+    };
   }
   if (estImage(s)) {
     // Champ image avec le bouton « Choisir dans la photothèque » (public/admin/phototheque.js)
@@ -343,6 +353,13 @@ function config() {
 }
 
 installerDecap();
+// Leaflet pour la mini-carte du widget « position » (public/admin/position.js), depuis node_modules
+if (existsSync(join(R, 'node_modules/leaflet/dist/leaflet.js'))) {
+  const dest = join(ADMIN, 'leaflet');
+  mkdirSync(dest, { recursive: true });
+  for (const f of ['leaflet.js', 'leaflet.css']) cpSync(join(R, 'node_modules/leaflet/dist', f), join(dest, f));
+  cpSync(join(R, 'node_modules/leaflet/dist/images'), join(dest, 'images'), { recursive: true });
+}
 const cfg = config();
 writeFileSync(join(ADMIN, 'config.yml'), '# Généré par scripts/decap.ts — ne pas modifier à la main.\n' + stringify(cfg, { lineWidth: 0 }));
 // Même configuration en JSON : l'éditeur la filtre pour un rédacteur (seulement ses rubriques), sans analyseur YAML

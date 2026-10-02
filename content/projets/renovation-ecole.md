@@ -6,8 +6,7 @@ date: 2026-07-06
 date_fin: 2027-08-27
 budget: "620 000 € HT, dont 60 % de subventions (État, Région)"
 lieu: École communale, 8 rue des Écoles
-latitude: 44.9018
-longitude: 5.0046
+position: { latitude: 44.9018, longitude: 5.0046 }
 resume: "Isolation, menuiseries et chauffage : l'école consommera deux fois moins d'énergie à la rentrée 2027. Les classes restent ouvertes pendant les travaux."
 mis_en_avant: true
 publics: [parent, nouvel-habitant]

@@ -38,7 +38,7 @@ export function construireIndex(pages: Element[], collections: Record<NomCollect
   // Vues générées à partir des contenus (src/pages/aujourdhui.astro, carte.astro, parcours)
   index.set('/aujourdhui', { url: '/aujourdhui', titre: "Aujourd'hui dans la commune", publie: true, type: 'page' });
   index.set('/recherche', { url: '/recherche', titre: 'Rechercher dans le site', publie: true, type: 'page' });
-  if ((collections as any).lieux?.some((e: Element) => estPublie(e) && e.data.latitude != null)) index.set('/carte', { url: '/carte', titre: 'Carte de la commune', publie: true, type: 'page' });
+  if ((collections as any).lieux?.some((e: Element) => estPublie(e) && e.data.position != null)) index.set('/carte', { url: '/carte', titre: 'Carte de la commune', publie: true, type: 'page' });
   // Parcours et sujets : publiés dès qu'un contenu publié (pages comprises) les porte
   const porte = (champ: 'publics' | 'sujets', v: string) =>
     pages.some((p) => p.data.statut !== 'brouillon' && (p.data[champ] ?? []).includes(v)) ||

@@ -5,8 +5,7 @@ avancement: consultation
 date: 2026-09-01
 budget: "Estimation : 95 000 € TTC"
 lieu: Terrain derrière la salle des fêtes
-latitude: 44.9031
-longitude: 5.0071
+position: { latitude: 44.9031, longitude: 5.0071 }
 resume: "Terrain multisport pour les jeunes : emplacement, horaires et équipements sont en concertation jusqu'au 31 octobre. Donnez votre avis !"
 publics: [parent]
 ---

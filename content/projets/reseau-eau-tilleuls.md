@@ -6,8 +6,7 @@ date: 2026-03-02
 date_fin: 2026-06-19
 budget: "210 000 € HT, avec l'aide de l'Agence de l'eau"
 lieu: Rue des Tilleuls
-latitude: 44.9002
-longitude: 5.0029
+position: { latitude: 44.9002, longitude: 5.0029 }
 resume: "380 mètres de canalisations remplacées : fini les fuites à répétition dans le quartier."
 sujets: [eau, voirie]
 ---

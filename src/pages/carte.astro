@@ -10,21 +10,33 @@ import Section from '../components/Section.astro';
 import { estPublie } from '../lib/requete';
 import { urlElement } from '../lib/urls';
 import { TYPES_LIEUX } from '../schemas/collections';
-const lieux = (await getCollection('lieux')).filter((e: any) => estPublie(e) && e.data.latitude != null && e.data.longitude != null);
-const projets = (await getCollection('projets')).filter((e: any) => estPublie(e) && e.data.latitude != null && e.data.longitude != null && e.data.avancement !== 'termine');
+const lieux = (await getCollection('lieux')).filter((e: any) => estPublie(e) && e.data.position);
+const projets = (await getCollection('projets')).filter((e: any) => estPublie(e) && e.data.position && e.data.avancement !== 'termine');
 const points = [
-  ...lieux.map((e: any) => ({ id: `lieux-${e.id}`, nom: e.data.titre, type: (TYPES_LIEUX as Record<string, string>)[e.data.type], cle: e.data.type, lat: e.data.latitude, lon: e.data.longitude, url: urlElement('lieux', e.id), adresse: e.data.adresse ?? '' })),
-  ...projets.map((e: any) => ({ id: `projets-${e.id}`, nom: e.data.titre, type: 'Projets en cours', cle: 'projet', lat: e.data.latitude, lon: e.data.longitude, url: urlElement('projets', e.id), adresse: e.data.lieu ?? '' })),
+  ...lieux.map((e: any) => ({ id: `lieux-${e.id}`, nom: e.data.titre, type: (TYPES_LIEUX as Record<string, string>)[e.data.type], cle: e.data.type, lat: e.data.position.latitude, lon: e.data.position.longitude, url: urlElement('lieux', e.id), adresse: e.data.adresse ?? '' })),
+  ...projets.map((e: any) => ({ id: `projets-${e.id}`, nom: e.data.titre, type: 'Projets en cours', cle: 'projet', lat: e.data.position.latitude, lon: e.data.position.longitude, url: urlElement('projets', e.id), adresse: e.data.lieu ?? '' })),
 ];
-const groupes = [...new Set(points.map((p) => p.type))].map((t) => ({ type: t, points: points.filter((p) => p.type === t).sort((a, b) => a.nom.localeCompare(b.nom, 'fr')) }));
+// Couleur par type (contrastes vérifiés sur fond de carte, liseré blanc)
+const COULEURS: Record<string, string> = { mairie: '#1E3A64', ecole: '#6A3FB5', salle: '#C2410C', sport: '#0E7490', culture: '#A3144D', parking: '#475569', defibrillateur: '#B42318', dechets: '#4D7C0F', nature: '#15803D', projet: '#B45309' };
+const groupes = [...new Set(points.map((p) => p.cle))].map((cle) => {
+  const pts = points.filter((p) => p.cle === cle).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  return { cle, type: pts[0].type, couleur: COULEURS[cle] ?? '#1E3A64', points: pts };
+}).sort((a, b) => a.type.localeCompare(b.type, 'fr'));
+const pointsColores = points.map((p) => ({ ...p, couleur: COULEURS[p.cle] ?? '#1E3A64' }));
 ---
 <Base titre="Carte de la commune" seo={{ titre: 'Carte de la commune', description: 'Lieux et équipements de la commune sur une carte : salles, écoles, sport, parkings, défibrillateurs, projets en cours.' }} url="/carte">
   <Section largeur="normale">
     <h1 class="h2">Carte de la commune</h1>
     <p class="intro">Salles, écoles, équipements, parkings, défibrillateurs et projets en cours. La liste ci-dessous reprend tous les lieux de la carte.</p>
-    <div class="carte" id="carte" data-points={JSON.stringify(points)}>
+    <fieldset class="types" id="types" hidden>
+      <legend>Afficher</legend>
+      {groupes.map((g) => (
+        <label><input type="checkbox" value={g.cle} checked /><span class="pastille" style={`background:${g.couleur}`} aria-hidden="true"></span>{g.type} <span class="nb">({g.points.length})</span></label>
+      ))}
+    </fieldset>
+    <div class="carte" id="carte" data-points={JSON.stringify(pointsColores)}>
       <div class="carte__attente">
-        <p>La carte utilise le fond « Plan IGN » de la Géoplateforme : il est chargé seulement si vous l'affichez.</p>
+        <p>La carte utilise les fonds de l'IGN (plan, photo aérienne, cadastre) : ils sont chargés seulement si vous l'affichez.</p>
         <button class="btn btn--primaire" type="button" id="afficher-carte">Afficher la carte</button>
       </div>
     </div>
@@ -32,8 +44,8 @@ const groupes = [...new Set(points.map((p) => p.type))].map((t) => ({ type: t, p
   <Section background="alt" titre="Tous les lieux">
     <div class="groupes">
       {groupes.map((g) => (
-        <section>
-          <h3>{g.type}</h3>
+        <section data-type={g.cle}>
+          <h3><span class="pastille" style={`background:${g.couleur}`} aria-hidden="true"></span>{g.type}</h3>
           <ul>{g.points.map((p) => <li id={p.id}><a href={p.url}>{p.nom}</a>{p.adresse && <span class="adr"> — {p.adresse}</span>}</li>)}</ul>
         </section>
       ))}
@@ -50,12 +62,32 @@ const groupes = [...new Set(points.map((p) => p.type))].map((t) => ({ type: t, p
     zone.innerHTML = '';
     zone.classList.add('carte--active');
     const carte = L.map(zone, { scrollWheelZoom: false });
-    L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
-      maxZoom: 19, attribution: '<a href="https://www.ign.fr/" target="_blank" rel="noopener">IGN</a> – Géoplateforme',
-    }).addTo(carte);
+    // Fonds IGN (Géoplateforme, sans clé ni cookie) : plan, photo aérienne ; cadastre en surimpression
+    const wmts = (couche: string, style: string, format: string, max: number) => L.tileLayer(
+      `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${couche}&STYLE=${encodeURIComponent(style)}&TILEMATRIXSET=PM&FORMAT=${format}&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`,
+      { maxZoom: 19, maxNativeZoom: max, attribution: '<a href="https://www.ign.fr/" target="_blank" rel="noopener">IGN</a> – Géoplateforme' });
+    const plan = wmts('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'normal', 'image/png', 19).addTo(carte);
+    const photo = wmts('ORTHOIMAGERY.ORTHOPHOTOS', 'normal', 'image/jpeg', 19);
+    const cadastre = wmts('CADASTRALPARCELS.PARCELLAIRE_EXPRESS', 'PCI vecteur', 'image/png', 19);
+    L.control.layers({ Plan: plan, 'Photo aérienne': photo }, { Cadastre: cadastre }, { collapsed: false, position: 'topright' }).addTo(carte);
     const esc = (s: string) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
-    const marqueurs = points.map((p: any) => L.circleMarker([p.lat, p.lon], { radius: 9, weight: 3, color: '#fff', fillColor: p.cle === 'projet' ? '#2B6B4B' : p.cle === 'defibrillateur' ? '#B42318' : '#1E3A64', fillOpacity: 1 })
-      .bindPopup(`<strong>${esc(p.nom)}</strong><br>${esc(p.type)}${p.adresse ? `<br>${esc(p.adresse)}` : ''}<br><a href="${p.url}">Voir la fiche</a>`).addTo(carte));
+    const groupesCarte: Record<string, any> = {};
+    const marqueurs = points.map((p: any) => {
+      const m = L.circleMarker([p.lat, p.lon], { radius: 10, weight: 3, color: '#fff', fillColor: p.couleur, fillOpacity: 1 })
+        .bindPopup(`<strong>${esc(p.nom)}</strong><br>${esc(p.type)}${p.adresse ? `<br>${esc(p.adresse)}` : ''}<br><a href="${p.url}">Voir la fiche</a>`);
+      (groupesCarte[p.cle] ??= L.layerGroup().addTo(carte)).addLayer(m);
+      return m;
+    });
+    // Filtres par type : la carte et la liste suivent les cases cochées
+    const types = document.getElementById('types');
+    if (types) {
+      types.hidden = false;
+      types.addEventListener('change', (ev) => {
+        const c = ev.target as HTMLInputElement;
+        if (c.checked) groupesCarte[c.value]?.addTo(carte); else groupesCarte[c.value]?.remove();
+        document.querySelectorAll<HTMLElement>(`[data-type="${c.value}"]`).forEach((x) => { x.hidden = !c.checked; });
+      });
+    }
     if (marqueurs.length) carte.fitBounds(L.featureGroup(marqueurs).getBounds().pad(0.2), { maxZoom: 17 });
     // Arrivée depuis une fiche (#lieux-salle-des-fetes) : ouvrir son point
     const cible = points.findIndex((p: any) => p.id === location.hash.slice(1));
@@ -68,6 +100,15 @@ const groupes = [...new Set(points.map((p) => p.type))].map((t) => ({ type: t, p
 </script>
 <style>
   .intro { color: var(--c-text-body); margin: 12px 0 20px; max-width: 70ch; }
+  .types { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 14px; padding: 0; border: 0; }
+  .types legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+  .types label { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; cursor: pointer; }
+  .types input { width: 18px; height: 18px; accent-color: var(--c-primary); }
+  .nb { color: var(--c-text-muted); font-size: 14px; }
+  .pastille { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25); margin-right: 6px; vertical-align: middle; }
+  .groupes section[hidden] { display: none; }
+  .carte :global(.leaflet-control-layers) { font: inherit; font-size: 14px; }
+  .carte :global(.leaflet-control-layers label) { min-height: 28px; display: flex; align-items: center; }
   .carte { height: min(70vh, 560px); border-radius: var(--radius-lg); border: 1px solid var(--c-border); overflow: hidden; background: var(--c-surface-alt); }
   .carte__attente { height: 100%; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--c-text-body); }
   .groupes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }

@@ -40,7 +40,7 @@ if (collection === 'projets') {
   if (d.lieu) lignes.push(['Lieu', d.lieu]);
   if (d.budget) lignes.push(['Budget', d.budget]);
   documents = (d.documents ?? []).map((x: any) => ({ titre: x.titre, doc: infosDocument(x.fichier) })).filter((x: any) => x.doc);
-  surCarte = d.latitude != null && d.longitude != null;
+  surCarte = d.position != null;
 }
 if (collection === 'lieux') {
   if (d.adresse) lignes.push(['Adresse', d.adresse]);
@@ -48,7 +48,7 @@ if (collection === 'lieux') {
   if (d.telephone) lignes.push(['Téléphone', d.telephone, tel(d.telephone)]);
   if (d.email) lignes.push(['E-mail', d.email, 'mailto:' + d.email]);
   if (d.pmr) lignes.push(['Accessibilité', ({ oui: 'Accessible aux personnes à mobilité réduite', partiel: 'Accès partiel pour les personnes à mobilité réduite', non: 'Non accessible aux personnes à mobilité réduite' } as Record<string, string>)[d.pmr] + (d.pmr_detail ? ` : ${d.pmr_detail}` : '')]);
-  surCarte = d.latitude != null && d.longitude != null;
+  surCarte = d.position != null;
 }
 if (collection === 'infos') {
   if (d.contact) lignes.push(['Contact', d.contact]);

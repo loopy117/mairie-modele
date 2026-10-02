@@ -95,7 +95,14 @@ export const THEMES_INFOS = {
 } as const;
 
 const cles = <T extends Record<string, string>>(o: T) => Object.keys(o) as [string, ...string[]];
-const gps = { latitude: z.number().min(-90).max(90).optional(), longitude: z.number().min(-180).max(180).optional() };
+/** Position sur la carte de la commune (éditeur : recherche de l'adresse ou clic sur la carte, widget « position »). */
+const gps = {
+  position: z
+    .object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) })
+    .strict()
+    .optional()
+    .describe('Position sur la carte : rechercher l\'adresse, ou cliquer sur la carte, puis ajuster le point en le faisant glisser'),
+};
 
 const email = z.union([z.string().email(), z.literal('')]).optional();
 const telephone = z.string().max(30).optional();
