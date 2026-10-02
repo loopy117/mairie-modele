@@ -31,7 +31,7 @@ const noter = (v, ou) => {
   }
   for (const x of Object.values(v)) noter(x, ou);
 };
-const LIBELLES = { actualites: 'Actualité', agenda: 'Agenda', actes: 'Acte', demarches: 'Démarche', annuaire: 'Annuaire', projets: 'Projet', lieux: 'Lieu', infos: 'Info pratique', albums: 'Album', documents: 'Document', pages: 'Page' };
+const LIBELLES = { actualites: 'Actualité', agenda: 'Agenda', actes: 'Acte', demarches: 'Démarche', annuaire: 'Annuaire', projets: 'Projet', lieux: 'Lieu', infos: 'Info pratique', albums: 'Album', documents: 'Document', pages: 'Page', realisations: 'Réalisation', services: 'Service', zones: 'Zone' };
 for (const f of lister('content')) {
   const col = relative('content', f).split('/')[0];
   let d;
