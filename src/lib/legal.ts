@@ -6,6 +6,9 @@
 import type { Site } from '../schemas/site';
 
 /** Prestataire : créateur du site et hébergeur (au sens de la LCEN), sur un serveur Scaleway. */
+/** Lien e-mail du site, ou le formulaire de contact tant que l'adresse n'est pas renseignée (pas de lien vide). */
+const courriel = (s: { email?: string }) => (s.email ? `[${s.email}](mailto:${s.email})` : 'le [formulaire de contact](/contact)');
+
 export const PRESTATAIRE = {
   marque: 'Sillaya',
   societe: 'Xmediacreation',
@@ -45,7 +48,7 @@ export function mentionsLegales(s: Site, confidentialite: string | null): string
     ...(s.siret ? [`SIRET : ${s.siret}  `] : []),
     ...(l.tva_intra ? [`TVA intracommunautaire : ${l.tva_intra}  `] : []),
     ...(s.telephone ? [`Téléphone : ${s.telephone}  `] : []),
-    `E-mail : [${s.email}](mailto:${s.email})`,
+    `E-mail : ${courriel(s)}`,
     '',
     `Directeur de la publication : ${l.directeur_publication}`,
     ...(l.profession ? ['', l.profession] : []),
@@ -71,7 +74,7 @@ export function mentionsLegales(s: Site, confidentialite: string | null): string
       ? ['', `**Médiation de la consommation.** En cas de litige, après une réclamation écrite restée sans réponse satisfaisante, le consommateur peut recourir gratuitement au médiateur de la consommation : [${l.mediateur.nom}](${l.mediateur.url}).`]
       : []),
     '',
-    `**Données personnelles.** ${confidentialite ? `Voir la [politique de confidentialité](${confidentialite}).` : `Pour toute question sur vos données : [${s.email}](mailto:${s.email}).`}`,
+    `**Données personnelles.** ${confidentialite ? `Voir la [politique de confidentialité](${confidentialite}).` : `Pour toute question sur vos données : ${courriel(s)}.`}`,
     '',
     '**Droit applicable.** Le présent site et ses conditions d\'utilisation sont soumis au droit français.',
   ];
@@ -83,7 +86,7 @@ export function politiqueConfidentialite(s: Site, polices: string | null): strin
   return [
     '## Qui est responsable de vos données',
     '',
-    `${l.raison_sociale}, ${adresseSiege(s)}. Contact : [${s.email}](mailto:${s.email}).`,
+    `${l.raison_sociale}, ${adresseSiege(s)}. Contact : ${courriel(s)}.`,
     '',
     '## Les données que nous recevons',
     '',
@@ -103,7 +106,7 @@ export function politiqueConfidentialite(s: Site, polices: string | null): strin
     '',
     '## Vos droits',
     '',
-    `Vous pouvez accéder à vos données, les faire rectifier ou effacer, vous opposer à leur utilisation, en demander la limitation ou la portabilité, en écrivant à [${s.email}](mailto:${s.email}). Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la [CNIL](https://www.cnil.fr).`,
+    `Vous pouvez accéder à vos données, les faire rectifier ou effacer, vous opposer à leur utilisation, en demander la limitation ou la portabilité, en écrivant à ${courriel(s)}. Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la [CNIL](https://www.cnil.fr).`,
   ].join('\n');
 }
 
@@ -134,7 +137,7 @@ export function declarationAccessibilite(s: Site, plan: string | null): string {
     '',
     '## Retour d\'information et contact',
     '',
-    `Si vous n'arrivez pas à accéder à un contenu ou à un service, contactez-nous à [${s.email}](mailto:${s.email})${s.telephone ? ` ou au ${s.telephone}` : ''} : nous vous indiquerons une autre façon d'y accéder ou vous transmettrons le contenu sous une autre forme.`,
+    `Si vous n'arrivez pas à accéder à un contenu ou à un service, contactez-nous à ${courriel(s)}${s.telephone ? ` ou au ${s.telephone}` : ''} : nous vous indiquerons une autre façon d'y accéder ou vous transmettrons le contenu sous une autre forme.`,
     '',
     '## Voies de recours',
     '',

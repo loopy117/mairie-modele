@@ -100,7 +100,7 @@ const url = Astro.url.pathname.replace(/\/$/, '') || '/';
       <Sections sections={avant} courant={courant} />
       {/* Démarches : le texte d'abord, puis pièces à fournir ; ailleurs, les infos pratiques en premier */}
       {props.collection !== 'demarches' && <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />}
-      {aCorps && <Section largeur="etroite"><Markdown source={entree.body} /></Section>}
+      {aCorps && <Section largeur="etroite" spacing="compact"><Markdown source={entree.body} /></Section>}
       {props.collection === 'demarches' && <FicheInfos collection={props.collection} id={entree.id} data={entree.data} />}
       {props.collection === 'albums' && <Album titre={entree.data.titre} photos={entree.data.photos} credit={entree.data.credit} />}
       {entree.data.sections && <Sections sections={entree.data.sections} courant={courant} />}
