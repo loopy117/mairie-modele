@@ -28,17 +28,16 @@ sections:
 
       Le bâtiment est accessible aux personnes à mobilité réduite (entrée par la rampe, côté parking).
 
-  - block: features
-    variant: grille-icones
+  - block: trombinoscope
     background: alt
     surtitre: Le conseil municipal
     titre: Vos élus
     intro: "Le conseil municipal se réunit en séance publique environ une fois par mois. Les dates sont annoncées dans l'agenda."
-    items:
-      - { icone: personnes, titre: Le maire, texte: "Nom du maire (exemple) — reçoit sur rendez-vous." }
-      - { icone: maison, titre: "1er adjoint · Travaux et urbanisme", texte: "Nom de l'élu (exemple)" }
-      - { icone: personnes, titre: "2e adjointe · Écoles et jeunesse", texte: "Nom de l'élu (exemple)" }
-      - { icone: calendrier, titre: "3e adjoint · Associations et culture", texte: "Nom de l'élu (exemple)" }
+    personnes:
+      - { nom: "Prénom Nom (exemple)", fonction: Maire, permanence: "Sur rendez-vous" }
+      - { nom: "Prénom Nom (exemple)", fonction: "1er adjoint délégué aux travaux et à l'urbanisme" }
+      - { nom: "Prénom Nom (exemple)", fonction: "2e adjointe déléguée aux écoles et à la jeunesse" }
+      - { nom: "Prénom Nom (exemple)", fonction: "3e adjoint délégué aux associations et à la culture" }
 
   - block: cta
     variant: carte

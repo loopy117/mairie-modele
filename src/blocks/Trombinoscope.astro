@@ -1,0 +1,48 @@
+---
+/**
+ * Trombinoscope : un portrait par personne (cadre vertical 3:4, recadré par le haut pour ne jamais couper la tête),
+ * avec nom, fonction, liste, délégation et permanence en dessous. Sans photo : initiales.
+ */
+import Section from '../components/Section.astro';
+import Img from '../components/Img.astro';
+import Markdown from '../components/Markdown.astro';
+const { background, spacing, id, surtitre, titre, intro, personnes = [] } = Astro.props;
+const initiales = (nom: string) => nom.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((m) => m[0]!.toUpperCase()).join('');
+---
+<Section {background} {spacing} {id} {surtitre} {titre} {intro}>
+  <ul class="trombi">
+    {personnes.map((p: any) => (
+      <li class="trombi__carte">
+        <div class="trombi__photo">
+          {p.photo
+            ? <Img image={{ ...p.photo, focus: p.photo.focus ?? 'haut' }} sizes="(min-width: 1100px) 260px, (min-width: 600px) 30vw, 45vw" largeurs={[320, 480, 640]} />
+            : <span class="trombi__initiales" aria-hidden="true">{initiales(p.nom)}</span>}
+        </div>
+        <div class="trombi__texte">
+          <h3 class="trombi__nom">{p.nom}</h3>
+          <p class="trombi__fonction">{p.fonction}</p>
+          {p.liste && <p class="trombi__liste">{p.liste}</p>}
+          {p.details && <Markdown source={p.details} class="trombi__details" lier={false} />}
+          {p.permanence && <p class="trombi__permanence"><span>Permanence :</span> {p.permanence}</p>}
+        </div>
+      </li>
+    ))}
+  </ul>
+</Section>
+<style>
+  .trombi { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 28px 20px; }
+  @media (max-width: 480px) { .trombi { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; } }
+  .trombi__carte { display: flex; flex-direction: column; gap: 12px; }
+  .trombi__photo { aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; background: var(--c-surface-alt); display: grid; place-items: center; }
+  .trombi__photo :global(picture), .trombi__photo :global(img) { display: block; width: 100%; height: 100%; }
+  .trombi__photo :global(img) { object-fit: cover; }
+  .trombi__initiales { font-family: var(--font-title); font-size: 44px; font-weight: 700; color: var(--c-text-muted); }
+  .trombi__texte { display: flex; flex-direction: column; gap: 4px; }
+  .trombi__nom { font-size: 18px; line-height: 1.25; margin: 0; }
+  .trombi__fonction { margin: 0; font-weight: 600; color: var(--c-text-body); font-size: 15px; line-height: 1.4; }
+  .trombi__liste { margin: 0; font-size: 13.5px; color: var(--c-text-muted); }
+  .trombi__texte :global(.trombi__details) { font-size: 14.5px; line-height: 1.5; color: var(--c-text-body); }
+  .trombi__texte :global(.trombi__details p) { margin: 4px 0 0; }
+  .trombi__permanence { margin: 4px 0 0; font-size: 14px; color: var(--c-text-body); }
+  .trombi__permanence span { font-weight: 600; }
+</style>

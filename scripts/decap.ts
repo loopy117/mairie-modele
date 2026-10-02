@@ -61,18 +61,18 @@ const LIBELLES: Record<string, string> = {
 const LIBELLES_BLOCS: Record<string, string> = {
   hero: 'Ouverture (hero)', texte: 'Texte', 'texte-image': 'Texte et image', features: 'Points forts / étapes', galerie: 'Galerie',
   slider: 'Diaporama', cta: "Appel à l'action", faq: 'Questions fréquentes', chiffres: 'Chiffres clés', formulaire: 'Formulaire de contact', tarifs: 'Tarifs',
-  boucle: 'Liste automatique (boucle)',
+  boucle: 'Liste automatique (boucle)', trombinoscope: 'Trombinoscope (portraits)', lettre: "Inscription à la lettre d'information",
 };
 /** Champs conservés mais non modifiables dans Decap. */
 const MASQUES: Record<string, string[]> = {
   boucle: ['source', 'filtre', 'exclure', 'elements', 'ordre', 'nombre', 'decalage', 'carte', 'affichage', 'options', 'si_vide', 'message_vide'],
   formulaire: ['champs', 'obligatoires'],
 };
-const MARKDOWN = new Set(['contenu', 'reponse', 'body']);
+const MARKDOWN = new Set(['contenu', 'reponse', 'body', 'details']);
 const OPTIONS: Record<string, string> = { ...AVANCEMENTS, ...THEMES_INFOS, ...TYPES_LIEUX, ...TYPES_ACTES, ...TYPES_ANNUAIRE, ...(taxonomies.metiers as Record<string, string>) };
 Object.assign(LIBELLES, {
   diffuser: 'Diffuser sur les réseaux', lettre: "Lettre d'information", sujets: 'Sujets', publics: 'Parcours (publics)',
-  photos: 'Photos', legende: 'Légende', credit: 'Crédit photo', autorisations: "Droit à l'image vérifié",
+  photos: 'Photos', legende: 'Légende', personnes: 'Personnes', nom: 'Nom', fonction: 'Fonction', details: 'Délégation, missions', permanence: 'Permanence', liste: 'Liste', photo: 'Photo', credit: 'Crédit photo', autorisations: "Droit à l'image vérifié",
   categorie: 'Thème', type: 'Nature', numero: 'Numéro', fichier: 'Document (PDF)', date_fin: 'Date de fin', horaire: 'Horaire', lieu: 'Lieu',
   organisateur: 'Organisé par', pieces: 'Pièces à fournir', contact: "Où s'adresser", adresse: 'Adresse', telephone: 'Téléphone', email: 'E-mail',
   site: 'Site internet', horaires: 'Horaires',

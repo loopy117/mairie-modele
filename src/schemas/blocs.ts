@@ -339,6 +339,32 @@ export const carte = z
     eviter: "Plus d'une carte par page ; une carte sur une page de service (le lien Itinéraire du contact suffit).",
   });
 
+export const trombinoscope = z
+  .object({
+    block: z.literal('trombinoscope'),
+    ...optionsCommunes,
+    ...entete,
+    personnes: z
+      .array(
+        z.object({
+          nom: z.string().min(3).max(80),
+          fonction: z.string().max(120).describe('Ex. « Première adjointe déléguée à l\'éducation »'),
+          details: markdown.max(600).optional().describe('Délégation, missions (court, Markdown)'),
+          permanence: z.string().max(120).optional().describe('Ex. « Sur rendez-vous le mardi, 9 h – 12 h »'),
+          liste: z.string().max(60).optional().describe('Liste ou groupe (conseil municipal)'),
+          photo: image.optional().describe('Portrait vertical ; texte alternatif : « Prénom Nom, fonction »'),
+        }).strict(),
+      )
+      .min(1)
+      .max(60),
+  })
+  .strict()
+  .meta({
+    role: 'Trombinoscope : portraits avec nom, fonction, délégation et permanence (élus, équipe des services).',
+    quand: 'Page des élus, équipe d\'un service.',
+    eviter: 'Une galerie pour des portraits (recadrage en paysage, pas de nom sous la photo).',
+  });
+
 export const lettre = z
   .object({
     block: z.literal('lettre'),
@@ -353,8 +379,8 @@ export const lettre = z
     eviter: 'Plusieurs formulaires d\'inscription sur la même page.',
   });
 
-export const blocs = { hero, texte, 'texte-image': texteImage, features, galerie, slider, cta: ctaBloc, faq, chiffres, formulaire, boucle, tarifs: tarifsBloc, legal, carte, lettre } as const;
+export const blocs = { hero, texte, 'texte-image': texteImage, features, galerie, slider, cta: ctaBloc, faq, chiffres, formulaire, boucle, tarifs: tarifsBloc, legal, carte, lettre, trombinoscope } as const;
 export type NomBloc = keyof typeof blocs;
 
-export const section = z.discriminatedUnion('block', [hero, texte, texteImage, features, galerie, slider, ctaBloc, faq, chiffres, formulaire, boucle, tarifsBloc, legal, carte, lettre]);
+export const section = z.discriminatedUnion('block', [hero, texte, texteImage, features, galerie, slider, ctaBloc, faq, chiffres, formulaire, boucle, tarifsBloc, legal, carte, lettre, trombinoscope]);
 export type Section = z.infer<typeof section>;
