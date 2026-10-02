@@ -89,8 +89,9 @@ function champ(nom: string, s: any, requis: boolean): any {
     return champ(nom, { ...sansNull[0], description: s.description, default: s.default }, requis);
   }
   if (estImage(s)) {
+    // Champ image avec le bouton « Choisir dans la photothèque » (public/admin/phototheque.js)
     return {
-      ...base, widget: 'object', collapsed: false,
+      ...base, widget: 'image_phototheque', collapsed: false,
       fields: [
         { name: 'src', label: 'Fichier', widget: 'image', required: requis, choose_url: false },
         { name: 'alt', label: 'Texte alternatif', widget: 'string', required: false, hint: "Ce qu'on voit sur l'image (125 caractères max). Vide seulement si décorative.", pattern: ['^[\\s\\S]{0,125}$', '125 caractères maximum'] },
@@ -122,10 +123,14 @@ function champ(nom: string, s: any, requis: boolean): any {
       const lim = { ...(s.minItems ? { min: s.minItems } : {}), ...(s.maxItems ? { max: s.maxItems } : {}) };
       if (it.enum) return { ...base, widget: 'select', multiple: true, options: it.enum, ...lim };
       if (estImage(it)) return {
-        ...base, widget: 'list', ...lim, summary: '{{fields.alt}}', fields: [
-          ...champ('x', it, true).fields,
-          ...Object.keys(it.properties).filter((k) => !['src', 'alt', 'focus'].includes(k)).map((k) => champ(k, it.properties[k], false)),
-        ],
+        ...base, widget: 'list', ...lim, summary: '{{fields.image.alt}}',
+        field: {
+          ...champ('image', it, true), label: 'Photo',
+          fields: [
+            ...champ('x', it, true).fields,
+            ...Object.keys(it.properties).filter((k) => !['src', 'alt', 'focus'].includes(k)).map((k) => champ(k, it.properties[k], false)),
+          ],
+        },
       };
       if (it.type === 'object') return { ...base, widget: 'list', ...lim, collapsed: true, fields: champsObjet(it) };
       return { ...base, widget: 'list', ...lim, field: { ...champ('valeur', it, true), label: 'Valeur' } };

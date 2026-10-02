@@ -42,8 +42,9 @@
           }
         }
       } catch (e) { /* hors ligne : Decap affichera sa connexion */ }
+      // Initialisation manuelle : le widget de la photothèque (phototheque.js) est enregistré avant l'ouverture de l'éditeur
+      window.CMS_MANUAL_INIT = true;
       if (config) {
-        window.CMS_MANUAL_INIT = true;
         if (!config.collections.length) {
           document.body.insertAdjacentHTML('afterbegin', '<p style="font:16px system-ui,sans-serif;padding:24px;max-width:560px">Aucune rubrique ne vous est encore confiée : demandez à un administrateur du site de vous en attribuer une (espace client, menu Utilisateurs).</p>');
           return;
@@ -58,7 +59,12 @@
         }
       }).observe(document.body, { childList: true, subtree: true });
       const s = document.createElement('script'); s.src = 'decap/decap-cms.js';
-      if (config) s.onload = () => (window.initCMS || window.CMS.init)({ config });
+      s.onload = () => {
+        const demarrer = () => (window.initCMS || window.CMS.init)(config ? { config } : undefined);
+        const p = document.createElement('script'); p.src = 'phototheque.js';
+        p.onload = demarrer; p.onerror = demarrer;   // sans photothèque, l'éditeur s'ouvre quand même
+        document.body.appendChild(p);
+      };
       document.body.appendChild(s);
     })();
   </script>
