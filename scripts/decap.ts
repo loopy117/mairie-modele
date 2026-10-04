@@ -196,7 +196,8 @@ const champSections = (requis: boolean) => ({
 
 function champsPage() {
   const s = js(page);
-  return champsObjet(s, ['sections']).concat([champSections(true)]);
+  // « Demande d'origine » (brief) : mémoire de l'assistant, conservée mais jamais montrée dans l'éditeur
+  return champsObjet(s, ['sections'], ['brief']).concat([champSections(true)]);
 }
 
 function champsCollection(nom: keyof typeof collectionSchemas) {
