@@ -1,20 +1,64 @@
 ---
-/** Bloc boucle : requête sur une collection + carte + disposition (spec §7). */
+/** Bloc boucle : requête sur une collection + carte + disposition (spec §7). Filtres par thème facultatifs. */
 import Section from '../components/Section.astro';
 import Disposition from '../dispositions/Disposition.astro';
 import { elements as charger } from '../lib/contenu';
 import { executer, type Element } from '../lib/requete';
+import taxonomies from '../../data/taxonomies.json';
 
 const b = Astro.props;
 const courant: Element | undefined = b.courant;
 const resultats = executer(await charger(b.source), b, { courant });
 const vide = resultats.length === 0;
+// Filtres : les thèmes présents dans les résultats, dans l'ordre de data/taxonomies.json
+const themes = b.filtres_themes
+  ? Object.entries(taxonomies.metiers as Record<string, string>).filter(([k]) => resultats.some((e) => e.data.categorie === k))
+  : [];
+const avecFiltres = themes.length > 1;
+const uid = `f-${b.id ?? b.source}-${Math.random().toString(36).slice(2, 7)}`;
 ---
 {!(vide && (b.si_vide ?? 'masquer') === 'masquer') && (
-  <Section background={b.background} spacing={b.spacing} id={b.id} surtitre={b.surtitre} titre={b.titre} intro={b.intro} lien={b.lien_tout_voir}>
-    {vide ? <p class="boucle__vide">{b.message_vide}</p> : <Disposition elements={resultats} carte={b.carte} affichage={b.affichage} options={b.options} />}
+  <Section background={b.background} spacing={b.spacing} id={b.id} surtitre={b.surtitre} titre={b.titre} intro={b.intro} lien={avecFiltres ? undefined : b.lien_tout_voir}>
+    {avecFiltres && (
+      <div class="filtres" role="group" aria-label="Filtrer par thème" data-filtres={uid}>
+        <button type="button" aria-pressed="true" data-theme="">Tout</button>
+        {themes.map(([k, label]) => <button type="button" aria-pressed="false" data-theme={k} data-metier={k}>{label}</button>)}
+        <p class="visually-hidden" aria-live="polite" data-annonce></p>
+      </div>
+    )}
+    <div data-liste={avecFiltres ? uid : undefined}>
+      {vide ? <p class="boucle__vide">{b.message_vide}</p> : <Disposition elements={resultats} carte={b.carte} affichage={b.affichage} options={b.options} />}
+    </div>
+    {avecFiltres && b.lien_tout_voir && <a class="link-more" href={b.lien_tout_voir.href}>{b.lien_tout_voir.label}</a>}
   </Section>
 )}
+<script>
+  document.querySelectorAll<HTMLElement>('[data-filtres]').forEach((groupe) => {
+    const liste = document.querySelector<HTMLElement>(`[data-liste="${groupe.dataset.filtres}"]`);
+    const annonce = groupe.querySelector<HTMLElement>('[data-annonce]');
+    if (!liste) return;
+    const cartes = [...liste.querySelectorAll<HTMLElement>('[data-metier]')];
+    groupe.addEventListener('click', (ev) => {
+      const bouton = (ev.target as HTMLElement).closest<HTMLButtonElement>('button[data-theme]');
+      if (!bouton) return;
+      const theme = bouton.dataset.theme ?? '';
+      groupe.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === bouton)));
+      let n = 0;
+      cartes.forEach((c) => {
+        const ok = !theme || c.dataset.metier === theme;
+        (c.closest('li') ?? c).hidden = !ok;
+        if (ok) n++;
+      });
+      if (annonce) annonce.textContent = `${n} élément${n > 1 ? 's' : ''}${theme ? ` dans le thème ${bouton.textContent}` : ''}`;
+    });
+  });
+</script>
 <style>
   .boucle__vide { color: var(--c-text-muted); }
+  .filtres { display: flex; flex-wrap: wrap; gap: 8px; margin-top: calc(-1 * clamp(12px, 2vw, 28px)); }
+  .filtres button { --metier: var(--c-ink); font: inherit; font-size: 14.5px; font-weight: 600; min-height: 44px; padding: 9px 16px; border-radius: var(--radius-pill); cursor: pointer; border: 2px solid var(--metier); background: #fff; color: var(--c-text); }
+  .filtres button[aria-pressed='true'] { background: var(--metier); color: #fff; }
+  .filtres button:hover { background: var(--metier-soft, var(--c-surface-alt)); }
+  .filtres button[aria-pressed='true']:hover { background: var(--metier); }
+  [hidden] { display: none !important; }
 </style>

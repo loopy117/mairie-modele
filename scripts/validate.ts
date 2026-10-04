@@ -23,6 +23,7 @@ import alerteDonnees from '../data/alerte.json' with { type: 'json' };
 import collectesDonnees from '../data/collectes.json' with { type: 'json' };
 import parcoursDonnees from '../data/parcours.json' with { type: 'json' };
 import { alerte } from '../src/schemas/alerte';
+import { COULEURS } from '../src/schemas/communs';
 import sujetsDonnees from '../data/sujets.json' with { type: 'json' };
 import { sujetsFichier } from '../src/schemas/sujets';
 import { formulaires as formulairesSchema } from '../src/schemas/formulaires';
@@ -127,6 +128,7 @@ const verifierNav = (fichier: string, liste: any[], chemin: string) =>
   liste.forEach((e, i) => {
     const r = resoudreEntree(e, index);
     if (r.probleme) signaler(r.probleme.grave ? 'erreur' : 'avertissement', fichier, `${chemin}[${i}]`, r.probleme.message);
+    if (e.couleur && !(COULEURS as readonly string[]).includes(e.couleur)) signaler('erreur', fichier, `${chemin}[${i}].couleur`, `couleur inconnue « ${e.couleur} » (${COULEURS.join(', ')})`);
     if (e.enfants) verifierNav(fichier, e.enfants, `${chemin}[${i}].enfants`);
   });
 verifierNav('data/menu.json', menu.principal, 'principal');

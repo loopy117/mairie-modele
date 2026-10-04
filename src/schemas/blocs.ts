@@ -5,7 +5,7 @@
  */
 import { z } from 'astro/zod';
 import formulairesSite from '../../data/formulaires.json' with { type: 'json' };
-import { image, cta, lien, icone, markdown, optionsCommunes, entete } from './communs';
+import { image, cta, lien, icone, markdown, optionsCommunes, entete, couleur } from './communs';
 import { collectionSchemas, nomsCollections, type NomCollection } from './collections';
 import { cartes, nomsCartes } from '../cards/cartes';
 import { illustration } from '../illustrations/noms';
@@ -16,9 +16,16 @@ const sansH1 = (s: string) => !/^#\s/m.test(s);
 export const hero = z
   .object({
     block: z.literal('hero'),
-    variant: z.enum(['plein-ecran', 'split', 'minimal']).default('plein-ecran'),
+    variant: z.enum(['plein-ecran', 'split', 'minimal', 'commune']).default('plein-ecran')
+      .describe('commune : fond bleu, pastille jaune, recherche du site, photo arrondie et silhouette du village'),
     ...optionsCommunes,
-    surtitre: z.string().max(40).optional().describe('Pastille au-dessus du titre (ex. « Artisan installateur · Pertuis »)'),
+    surtitre: z.string().max(48).optional().describe('Pastille au-dessus du titre (ex. « Artisan installateur · Pertuis »)'),
+    accent: z.string().max(30).optional().describe('Mot du titre mis en couleur (variante commune), recopié tel qu\'il apparaît dans le titre'),
+    recherche: z
+      .object({ label: z.string().max(40).default('Que cherchez-vous ?'), exemples: z.string().max(90).optional().describe('Ex. « carte d\'identité, cantine, salle des fêtes »') })
+      .strict()
+      .optional()
+      .describe('Champ de recherche dans le site (variante commune)'),
     titre: z.string().min(10).max(70).describe('Titre principal de la page (H1)'),
     texte: z.string().max(220).optional(),
     image: image.optional().describe('Obligatoire sauf variante minimal (ou illustration en variante split)'),
@@ -27,7 +34,8 @@ export const hero = z
     points: z.array(z.string().max(40)).max(4).default([]).describe('Garanties courtes affichées sous les boutons'),
   })
   .strict()
-  .refine((b) => b.variant === 'minimal' || !!b.image || (b.variant === 'split' && !!b.illustration), { message: 'image obligatoire (plein-ecran), image ou illustration (split)', path: ['image'] })
+  .refine((b) => b.variant === 'minimal' || b.variant === 'commune' || !!b.image || (b.variant === 'split' && !!b.illustration), { message: 'image obligatoire (plein-ecran), image ou illustration (split)', path: ['image'] })
+  .refine((b) => !b.accent || b.titre.includes(b.accent), { message: 'le mot mis en couleur doit figurer dans le titre', path: ['accent'] })
   .meta({
     role: 'Ouverture de page, message principal.',
     quand: 'Toujours en première section, un seul par page. plein-ecran : accueil et pages de service avec une belle photo. split : photo moins forte ou texte plus long. minimal : pages utilitaires (contact, mentions).',
@@ -68,6 +76,8 @@ export const texteImage = z
     points_style: z.enum(['traits', 'icones', 'encarts']).default('traits').describe('traits : trait de couleur · icones : icône devant le texte · encarts : petites cartes (2 colonnes)'),
     signature: z.object({ nom: z.string().max(60).optional(), role: z.string().max(90) }).strict().optional().describe('Sous une citation : nom et fonction'),
     images: z.array(image).max(3).default([]).describe('1 image, ou 3 pour une mosaïque (la 1re en hauteur)'),
+    forme: z.enum(['standard', 'arche']).default('standard').describe('arche : image unique en arche (portrait du maire…) ; sans image, l\'emblème de la commune'),
+    liens: z.array(cta).max(2).default([]).describe('Boutons sous le texte'),
     illustration: illustration.optional().describe('Illustration codée à la place des images'),
     lien: lien.optional(),
   })
@@ -82,8 +92,8 @@ export const texteImage = z
 export const features = z
   .object({
     block: z.literal('features'),
-    variant: z.enum(['grille-icones', 'liste', 'etapes-numerotees', 'comparatif', 'paires']).default('grille-icones')
-      .describe('comparatif : cartes titrées en petites capitales (options comparées) · paires : items regroupés deux par carte'),
+    variant: z.enum(['grille-icones', 'liste', 'etapes-numerotees', 'comparatif', 'paires', 'tuiles', 'rubriques']).default('grille-icones')
+      .describe('comparatif : cartes titrées en petites capitales (options comparées) · paires : items regroupés deux par carte · tuiles : raccourcis colorés, toute la tuile est un lien · rubriques : grandes cartes de couleur (photo facultative), toute la carte est un lien'),
     ...optionsCommunes,
     ...entete,
     items: z
@@ -91,6 +101,8 @@ export const features = z
         icone: icone.optional(), titre: z.string().max(60), texte: z.string().max(200).optional(), lien: lien.optional(),
         mis_en_avant: z.boolean().optional().describe('Carte mise en valeur (fond de couleur) : une seule par bloc, grille uniquement'),
         badge: z.string().max(24).optional().describe('Pastille sur la carte mise en avant (ex. « Recommandé »)'),
+        couleur: couleur.optional().describe('Variantes tuiles et rubriques (sinon couleurs en alternance)'),
+        image: image.optional().describe('Variante rubriques : photo carrée en haut de la carte'),
       }).strict())
       .min(2)
       .max(8),
@@ -99,6 +111,7 @@ export const features = z
   .strict()
   .superRefine((b, ctx) => {
     if (b.items.filter((i) => i.mis_en_avant).length > 1) ctx.addIssue({ code: 'custom', path: ['items'], message: 'une seule carte mise en avant par bloc' });
+    if (b.variant === 'tuiles' || b.variant === 'rubriques') b.items.forEach((it, i) => { if (!it.lien) ctx.addIssue({ code: 'custom', path: ['items', i, 'lien'], message: `lien obligatoire en variante ${b.variant}` }); });
   })
   .meta({
     role: 'Points forts, garanties, étapes d\'un processus.',
@@ -142,8 +155,9 @@ export const slider = z
 export const ctaBloc = z
   .object({
     block: z.literal('cta'),
-    variant: z.enum(['bandeau', 'carte', 'split-image']).default('carte'),
+    variant: z.enum(['bandeau', 'carte', 'split-image', 'encart']).default('carte').describe('encart : grand encadré jaune arrondi, titre fort et boutons à droite'),
     ...optionsCommunes,
+    surtitre: z.string().max(40).optional().describe('Petite ligne au-dessus du titre (variante encart)'),
     icone: icone.optional().describe('Pastille d\'icône (variante bandeau)'),
     titre: z.string().max(80),
     texte: z.string().max(220).optional(),
@@ -261,6 +275,7 @@ export const boucle = z
     options: z.record(z.string(), z.unknown()).default({}),
     si_vide: z.enum(['masquer', 'message']).default('masquer'),
     message_vide: z.string().max(120).optional(),
+    filtres_themes: z.boolean().default(false).describe('Boutons de filtre par thème (categorie) au-dessus des cartes'),
   })
   .strict()
   .superRefine((b, ctx) => {
@@ -339,6 +354,20 @@ export const carte = z
     eviter: "Plus d'une carte par page ; une carte sur une page de service (le lien Itinéraire du contact suffit).",
   });
 
+export const mairie = z
+  .object({
+    block: z.literal('mairie'),
+    ...optionsCommunes,
+    titre: z.string().max(60).default('Horaires de la mairie'),
+    itineraire: z.string().url().optional().describe('Lien vers un plan ou un itinéraire (OpenStreetMap, Géoportail…)'),
+  })
+  .strict()
+  .meta({
+    role: 'Horaires, adresse et ouverture en ce moment de la mairie, d\'après data/site.json.',
+    quand: 'Bas de l\'accueil, page contact.',
+    eviter: 'Recopier les horaires à la main : ils viennent de data/site.json.',
+  });
+
 export const trombinoscope = z
   .object({
     block: z.literal('trombinoscope'),
@@ -379,8 +408,8 @@ export const lettre = z
     eviter: 'Plusieurs formulaires d\'inscription sur la même page.',
   });
 
-export const blocs = { hero, texte, 'texte-image': texteImage, features, galerie, slider, cta: ctaBloc, faq, chiffres, formulaire, boucle, tarifs: tarifsBloc, legal, carte, lettre, trombinoscope } as const;
+export const blocs = { hero, texte, 'texte-image': texteImage, features, galerie, slider, cta: ctaBloc, faq, chiffres, formulaire, boucle, tarifs: tarifsBloc, legal, carte, mairie, lettre, trombinoscope } as const;
 export type NomBloc = keyof typeof blocs;
 
-export const section = z.discriminatedUnion('block', [hero, texte, texteImage, features, galerie, slider, ctaBloc, faq, chiffres, formulaire, boucle, tarifsBloc, legal, carte, lettre, trombinoscope]);
+export const section = z.discriminatedUnion('block', [hero, texte, texteImage, features, galerie, slider, ctaBloc, faq, chiffres, formulaire, boucle, tarifsBloc, legal, carte, mairie, lettre, trombinoscope]);
 export type Section = z.infer<typeof section>;

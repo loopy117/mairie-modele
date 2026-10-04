@@ -200,5 +200,5 @@ for (const f of lister(DIST, '.html')) {
   if (html.includes('id="xm-apercu"') || !html.includes('</body>') || f.includes(`${join(DIST, 'admin')}`)) continue;
   writeFileSync(f, html.replace('</body>', `<script id="xm-apercu" type="application/json">{"fichier":null,"editeur":${JSON.stringify(echapperAttr(editeur.replace(/collections\/$/, '')))},"champs":[]}</script><script src="/xmedia-ai/apercu.js" defer></script></body>`));
 }
-writeFileSync(join(DIST, 'apercu.json'), JSON.stringify({ branche: process.env.APERCU_BRANCHE || '', sha: process.env.GITHUB_SHA || '', date: new Date().toISOString() }));
+writeFileSync(join(DIST, 'apercu.json'), JSON.stringify({ branche: process.env.APERCU_BRANCHE || '', sha: process.env.APERCU_SHA || process.env.GITHUB_SHA || '', date: new Date().toISOString() }));
 console.log(`Aperçu : ${reperes} texte(s) modifiable(s) sur ${pages} page(s)`);

@@ -2,6 +2,8 @@
 import Section from '../components/Section.astro';
 import Icone from '../components/Icone.astro';
 import { composantsIllustrations } from '../illustrations';
+import Img from '../components/Img.astro';
+import { COULEURS } from '../schemas/communs';
 const { variant = 'grille-icones', background, spacing, id, surtitre, titre, intro, items = [], illustration } = Astro.props;
 const Balise = variant === 'etapes-numerotees' ? 'ol' : 'ul';
 const Illustration = illustration ? composantsIllustrations[illustration.nom as keyof typeof composantsIllustrations] : null;
@@ -11,8 +13,28 @@ const groupes: any[][] = variant === 'paires'
   : items.map((it: any) => [it]);
 // Titres des cartes : h3 sous le titre de la section, h2 si la section n'en a pas (hiérarchie sans saut, RGAA 9.1)
 const Titre = titre ? 'h3' : 'h2';
+// Tuiles et rubriques : couleur de l'item, sinon en alternance
+const coul = (it: any, i: number) => it.couleur ?? COULEURS[i % COULEURS.length];
+const styleCoul = (it: any, i: number) => `--rub: var(--c-${coul(it, i)}); --rub-soft: var(--c-${coul(it, i)}-soft)`;
+const cartesLiens = variant === 'tuiles' || variant === 'rubriques';
 ---
 <Section {background} {spacing} {id} {surtitre} {titre} {intro}>
+  {cartesLiens ? (
+  <ul class:list={['ft', `ft--${variant}`]}>
+    {items.map((it: any, i: number) => (
+      <li class="lc" style={styleCoul(it, i)}>
+        <a class="lc__lien" href={it.lien?.href}>
+          {variant === 'tuiles' && <span class="lc__point" aria-hidden="true"></span>}
+          {variant === 'rubriques' && it.image && <span class="lc__media"><Img image={{ ...it.image, alt: '' }} sizes="(min-width: 1100px) 20vw, (min-width: 640px) 33vw, 100vw" largeurs={[320, 480, 720]} /></span>}
+          <span class="lc__corps">
+            <Titre class="lc__titre">{it.titre}</Titre>
+            {it.texte && <span class="lc__texte">{it.texte}</span>}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+  ) : (
   <Balise class:list={['ft', `ft--${variant}`]}>
     {Illustration && <li class="ft__illustration"><Illustration {...illustration} /></li>}
     {groupes.map((g, gi) => (
@@ -33,8 +55,32 @@ const Titre = titre ? 'h3' : 'h2';
       </li>
     ))}
   </Balise>
+  )}
 </Section>
 <style>
+  /* tuiles : raccourcis teintés, point de couleur */
+  .ft--tuiles { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+  @media (max-width: 560px) { .ft--tuiles { grid-template-columns: 1fr 1fr; gap: 10px; } .ft--tuiles .lc__lien { padding: 16px; min-height: 0; } .ft--tuiles .lc__titre { font-size: 16px; } }
+  .ft--rubriques { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 16px; }
+  .lc { display: flex; }
+  .lc__lien { flex: 1; display: flex; flex-direction: column; border-radius: var(--radius-lg); color: var(--c-text); transition: transform .15s; }
+  .lc__lien:hover { color: var(--c-text); transform: translateY(-2px); }
+  .lc__titre { font-family: var(--font-sans); font-size: 18px; font-weight: 700 !important; line-height: 1.25; color: inherit; }
+  .lc__texte { font-size: 14px; line-height: 1.4; }
+  .lc__corps { display: flex; flex-direction: column; gap: 6px; }
+  .ft--tuiles .lc__lien { min-height: 120px; padding: 22px; gap: 12px; background: var(--rub-soft); }
+  .ft--tuiles .lc__texte { color: var(--c-text-body); }
+  .lc__point { width: 14px; height: 14px; border-radius: 50%; background: var(--rub); }
+  .ft--rubriques .lc__lien { overflow: hidden; border-radius: var(--radius-xl); background: var(--rub); color: #fff; min-height: 190px; justify-content: flex-end; }
+  .ft--rubriques .lc__lien:hover { color: #fff; transform: translateY(-3px); }
+  .ft--rubriques .lc__corps { padding: 18px 20px 22px; }
+  .ft--rubriques .lc__titre { font-family: var(--font-title); font-size: 22px; line-height: 1.1; }
+  .ft--rubriques .lc__texte { font-size: 14.5px; }
+  .lc__media { display: block; background: var(--rub-soft); }
+  .lc__media :global(img) { width: 100%; aspect-ratio: 1; object-fit: cover; }
+  @media (prefers-reduced-motion: reduce) { .lc__lien { transition: none; } .lc__lien:hover { transform: none; } }
+
+  .ft :global(.link-more) { background: none; color: var(--c-link); padding: 0; min-height: 0; text-decoration: underline; text-underline-offset: 3px; font-size: var(--fs-base); }
   .ft { list-style: none; margin: 0; padding: 0; display: grid; gap: 24px; }
   .ft--grille-icones, .ft--comparatif, .ft--paires { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
   .ft--grille-icones .ft__item { border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 28px; display: flex; flex-direction: column; gap: 14px; }

@@ -12,9 +12,9 @@ on:
         description: "Identifiant de la demande (ex. 20260929-ab12cd34)"
         required: true
       action:
-        description: "realiser (première réalisation) ou completer (après les réponses du client)"
+        description: "realiser (première réalisation), completer (après les réponses du client) ou corriger (corrections demandées sur l'aperçu)"
         type: choice
-        options: [realiser, completer]
+        options: [realiser, completer, corriger]
         default: realiser
 
 concurrency:
@@ -38,7 +38,7 @@ jobs:
       - name: Vérifier la demande
         run: |
           [[ "$ID" =~ ^[0-9]{8}-[a-f0-9]{8}$ ]] || { echo "::error::Identifiant de demande invalide"; exit 1; }
-          [[ "$ACTION" =~ ^(realiser|completer)$ ]] || { echo "::error::Action inconnue"; exit 1; }
+          [[ "$ACTION" =~ ^(realiser|completer|corriger)$ ]] || { echo "::error::Action inconnue"; exit 1; }
 
       - uses: actions/checkout@v5
         with:
@@ -140,7 +140,8 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -q -m "xmedia·ai : $TITRE ($ID)" -m "$(jq -r '.resume' _demande/rapport.json)" -m "Demande client $ID, action $ACTION."
             git push -q origin "$BRANCHE"
-          elif [ "$ACTION" = "realiser" ]; then
+          elif [ "$ACTION" = "realiser" ] && [ -z "$(git rev-list origin/main..HEAD)" ]; then
+            # Rien de nouveau ET rien sur la branche : échec. Travail déjà poussé (relance après incident) : on ouvre la proposition.
             echo "STATUT=echec" >> "$GITHUB_ENV"; echo "::error::Aucune modification produite"; exit 0
           fi
           {
@@ -168,6 +169,14 @@ jobs:
           fi
           echo "PR_NUMERO=$PR" >> "$GITHUB_ENV"
           echo "PR_URL=$(gh pr view "$PR" --json url --jq .url)" >> "$GITHUB_ENV"
+          # Version exacte proposée au client : l'aperçu et la publication s'y rapportent (rien de non relu ne part en ligne)
+          echo "SHA_PROPOSITION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Préparer l'aperçu privé
+        # Un push fait avec GITHUB_TOKEN ne déclenche pas le déploiement : on le demande explicitement
+        if: env.STATUT == 'a_valider' && vars.DOSSIER_APERCU != ''
+        continue-on-error: true
+        run: gh api "repos/$GITHUB_REPOSITORY/dispatches" -f event_type=apercu -f "client_payload[branche]=$BRANCHE"
 
       - name: Prévenir le site
         if: always()
@@ -179,7 +188,8 @@ jobs:
           [ -f _demande/rapport.json ] || echo '{}' > _demande/rapport.json
           CORPS=$(jq -cn --arg id "$ID" --arg statut "${STATUT:-echec}" --arg branche "$BRANCHE" --arg url "${PR_URL:-}" --arg num "${PR_NUMERO:-}" \
             --arg note "run ${{ github.run_id }}" --slurpfile r _demande/rapport.json \
-            '{type:"statut", id:$id, statut:$statut, branche:$branche, pr_url:(if $url == "" then null else $url end), pr_numero:(if $num == "" then null else ($num|tonumber) end), note:$note,
+            --arg sha "${SHA_PROPOSITION:-}" --arg apercu "${{ vars.DOSSIER_APERCU != '' }}" \
+            '{type:"statut", id:$id, statut:$statut, branche:$branche, pr_url:(if $url == "" then null else $url end), pr_numero:(if $num == "" then null else ($num|tonumber) end), note:$note, sha:(if $sha == "" then null else $sha end), apercu:($apercu == "true"),
               rapport:{resume:($r[0].resume // ""), hypotheses:($r[0].hypotheses // []), pages:($r[0].pages // [])}, questions:($r[0].questions // [])}')
           SIG=$(printf '%s' "$CORPS" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')
           curl -sS --fail -L --post301 --post302 -X POST "${URL_PRODUCTION%/}/xmedia-ai/webhook.php" -H 'Content-Type: application/json' -H "X-Xmedia-Signature: sha256=$SIG" -d "$CORPS"

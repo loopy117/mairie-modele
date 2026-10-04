@@ -4,15 +4,18 @@ import Markdown from '../components/Markdown.astro';
 import Img from '../components/Img.astro';
 import Icone from '../components/Icone.astro';
 import { composantsIllustrations } from '../illustrations';
+import Boutons from '../components/Boutons.astro';
+import Embleme from '../partials/Embleme.astro';
 const { variant = 'image-droite', background, spacing, id, surtitre, titre, contenu, citation = false, points = [], points_style = 'traits',
-  signature, images = [], illustration, lien } = Astro.props;
+  signature, images = [], illustration, lien, forme = 'standard', liens = [] } = Astro.props;
+const arche = forme === 'arche';
 const mosaique = images.length === 3;
 const Illustration = illustration ? composantsIllustrations[illustration.nom as keyof typeof composantsIllustrations] : null;
-const aVisuel = images.length > 0 || !!Illustration;
+const aVisuel = images.length > 0 || !!Illustration || arche;
 const dessous = variant === 'visuel-dessous';
 ---
 <Section {background} {spacing} {id}>
-  <div class:list={['ti', `ti--${variant}`, !aVisuel && 'ti--sans-visuel']}>
+  <div class:list={['ti', `ti--${variant}`, !aVisuel && 'ti--sans-visuel', arche && 'ti--arche']}>
     <div class="ti__texte">
       {surtitre && <p class="eyebrow">{surtitre}</p>}
       <h2 class="h2">{titre}</h2>
@@ -36,6 +39,7 @@ const dessous = variant === 'visuel-dessous';
         <p class="ti__signature">{signature.nom && <strong>{signature.nom}</strong>}<span>{signature.role}</span></p>
       )}
       {lien && <a class="link-more" href={lien.href}>{lien.label}</a>}
+      {liens.length > 0 && <Boutons ctas={liens} />}
     </div>
     {dessous && points.length > 0 && (
       <ul class:list={['ti__points', `ti__points--${points_style}`, 'ti__points--cote']} role="list">
@@ -47,7 +51,12 @@ const dessous = variant === 'visuel-dessous';
         ))}
       </ul>
     )}
-    {aVisuel && (
+    {arche && (
+      <div class="ti__arche" aria-hidden={images[0]?.alt ? undefined : 'true'}>
+        {images[0] ? <Img image={images[0]} sizes="(min-width: 900px) 320px, 80vw" largeurs={[320, 640, 960]} /> : <Embleme hauteur={220} />}
+      </div>
+    )}
+    {aVisuel && !arche && (
       <div class:list={['ti__media', mosaique && 'ti__media--mosaique', images.length === 2 && 'ti__media--duo']}>
         {Illustration
           ? <Illustration {...illustration} />
@@ -87,6 +96,15 @@ const dessous = variant === 'visuel-dessous';
   :global(.on-dark) .ti__pt-texte, :global(.on-dark) .ti__texte :global(.ti__contenu) { color: var(--c-on-dark-body); }
   :global(.on-dark) .ti__points :global(.ti__icone) { color: var(--c-peche, var(--c-on-dark)); }
   .ti__media { min-width: 0; }
+  /* arche : portrait en arche à gauche, texte à droite */
+  .ti--arche { grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 40px clamp(40px, 5vw, 72px); }
+  .ti--arche .ti__arche { order: -1; aspect-ratio: 4 / 5; border-radius: 160px 160px 28px 28px; overflow: hidden; background: var(--c-municipale-soft); display: grid; place-items: center; }
+  .ti--arche .ti__arche :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .ti--arche .ti__arche :global(.embleme) { width: auto; height: 60%; opacity: .5; }
+  .ti--arche .ti__texte { gap: 20px; }
+  .ti--arche .h2 { font-family: var(--font-sans); font-size: 15px; font-weight: 700 !important; letter-spacing: 0; color: var(--c-primary); }
+  .ti--arche .ti__texte :global(.ti__citation) { font-weight: 700; font-size: clamp(26px, 3vw, 40px); line-height: 1.15; letter-spacing: -0.015em; color: var(--c-text); }
+  @media (max-width: 760px) { .ti--arche { grid-template-columns: 1fr; } .ti--arche .ti__arche { max-width: 260px; } }
   .ti__cadre { position: relative; min-width: 0; overflow: hidden; border-radius: 24px; }
   .ti__cadre :global(img) { width: 100%; height: 100%; object-fit: cover; }
   .ti__media:not(.ti__media--mosaique):not(.ti__media--duo) .ti__cadre :global(img) { aspect-ratio: 4 / 3; }

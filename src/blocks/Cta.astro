@@ -3,7 +3,7 @@ import Section from '../components/Section.astro';
 import Boutons from '../components/Boutons.astro';
 import Icone from '../components/Icone.astro';
 import Img from '../components/Img.astro';
-const { variant = 'carte', background = 'clair', spacing, id, icone, titre, texte, ctas = [], note, image } = Astro.props;
+const { variant = 'carte', background = 'clair', spacing, id, icone, titre, texte, ctas = [], note, image, surtitre } = Astro.props;
 ---
 {variant === 'bandeau' && (
   <Section {background} {spacing} {id}>
@@ -30,6 +30,18 @@ const { variant = 'carte', background = 'clair', spacing, id, icone, titre, text
     </div>
   </Section>
 )}
+{variant === 'encart' && (
+  <Section {background} {spacing} {id}>
+    <div class="cta-encart">
+      <div class="cta-encart__texte">
+        {surtitre && <p class="cta-encart__surtitre">{surtitre}</p>}
+        <h2 class="cta-encart__titre">{titre}</h2>
+        {texte && <p class="cta-encart__sous">{texte}</p>}
+      </div>
+      <Boutons ctas={ctas} />
+    </div>
+  </Section>
+)}
 {variant === 'split-image' && image && (
   <Section {background} {spacing} {id}>
     <div class="cta-split on-dark">
@@ -44,6 +56,12 @@ const { variant = 'carte', background = 'clair', spacing, id, icone, titre, text
   </Section>
 )}
 <style>
+  .cta-encart { background: var(--c-soleil); color: var(--c-ink); border-radius: var(--radius-2xl); padding: clamp(28px, 4vw, 44px); display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: center; justify-content: space-between; }
+  .cta-encart__texte { flex: 1 1 420px; display: flex; flex-direction: column; gap: 8px; }
+  .cta-encart__surtitre { font-weight: 700; font-size: 15px; }
+  .cta-encart__titre { font-size: clamp(30px, 3.6vw, 46px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.02; color: var(--c-ink); }
+  .cta-encart__sous { font-size: var(--fs-md); max-width: 620px; }
+  .cta-encart :global(.btn--primaire:hover) { background: var(--c-democratie); }
   .cta__col { display: flex; flex-direction: column; gap: 10px; }
   .cta__col--centre { align-items: center; }
   .cta__note { font-size: 14px; color: #fff; text-align: center; }

@@ -1,0 +1,79 @@
+---
+/** Bloc mairie : horaires (data/site.json › horaires_detail), adresse, ouverture en ce moment (calculée dans le navigateur). */
+import Section from '../components/Section.astro';
+import site from '../../data/site.json';
+import { JOURS } from '../schemas/site';
+const { background, spacing, id, titre = 'Horaires de la mairie', itineraire } = Astro.props;
+const plages: { jours: string[]; ouverture: string; fermeture: string }[] = (site as any).horaires_detail ?? [];
+const h = (x: string) => { const [hh, mm] = x.split(':'); return `${Number(hh)} h${mm !== '00' ? ' ' + mm : ''}`; };
+const parJour = JOURS.map((j) => {
+  const p = plages.filter((x) => x.jours.includes(j)).sort((a, b) => a.ouverture.localeCompare(b.ouverture));
+  return { j, texte: p.length ? p.map((x) => `${h(x.ouverture)} – ${h(x.fermeture)}`).join(' · ') : 'Fermé' };
+});
+// Jours consécutifs aux horaires identiques regroupés (« Lundi – jeudi »)
+const groupes: { de: string; a: string; texte: string }[] = [];
+for (const { j, texte } of parJour) {
+  const g = groupes.at(-1);
+  if (g && g.texte === texte) g.a = j; else groupes.push({ de: j, a: j, texte });
+}
+const maj = (s: string) => s[0].toUpperCase() + s.slice(1);
+const libelle = (g: { de: string; a: string }) => g.de === g.a ? maj(g.de) : `${maj(g.de)} – ${g.a}`;
+const adr = site.adresse;
+---
+<Section {background} {spacing} {id}>
+  <div class="mairie">
+    <div class="mairie__carte mairie__carte--bleu">
+      <h2 class="mairie__titre">{titre}</h2>
+      {plages.length ? (
+        <dl class="mairie__horaires">
+          {groupes.map((g) => <><dt>{libelle(g)}</dt><dd>{g.texte}</dd></>)}
+        </dl>
+      ) : <p>{site.horaires}</p>}
+    </div>
+    <div class="mairie__carte mairie__carte--orange">
+      <h2 class="mairie__titre">Nous trouver</h2>
+      <p class="mairie__adresse">{adr.rue && <>{adr.rue}<br /></>}{adr.code_postal} {adr.ville}</p>
+      <ul class="mairie__liens">
+        <li><a href="/contact">Écrire à la mairie</a></li>
+        {itineraire && <li><a href={itineraire}>Itinéraire vers la mairie</a></li>}
+      </ul>
+    </div>
+    <div class="mairie__carte mairie__carte--vert">
+      <h2 class="mairie__titre">En ce moment</h2>
+      <p class="mairie__etat" data-ouverture={JSON.stringify(plages)}>{site.horaires}</p>
+      <ul class="mairie__liens"><li><a href="/aujourdhui">Aujourd'hui à {adr.ville}</a></li></ul>
+    </div>
+  </div>
+</Section>
+<script>
+  const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  document.querySelectorAll<HTMLElement>('.mairie__etat[data-ouverture]').forEach((el) => {
+    const plages: { jours: string[]; ouverture: string; fermeture: string }[] = JSON.parse(el.dataset.ouverture || '[]');
+    if (!plages.length) return;
+    const n = new Date();
+    const jour = JOURS[n.getDay()];
+    const hm = `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+    const fmt = (x: string) => { const [h, m] = x.split(':'); return `${Number(h)} h${m !== '00' ? ' ' + m : ''}`; };
+    const auj = plages.filter((p) => p.jours.includes(jour)).sort((a, b) => a.ouverture.localeCompare(b.ouverture));
+    const enCours = auj.find((p) => p.ouverture <= hm && hm < p.fermeture);
+    const suivante = auj.find((p) => p.ouverture > hm);
+    el.innerHTML = enCours
+      ? `<strong>La mairie est ouverte</strong> jusqu'à ${fmt(enCours.fermeture)}.`
+      : suivante ? `<strong>La mairie est fermée</strong>, elle ouvre à ${fmt(suivante.ouverture)}.` : `<strong>La mairie est fermée</strong> pour aujourd'hui.`;
+  });
+</script>
+<style>
+  .mairie { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px; }
+  .mairie__carte { border-radius: var(--radius-xl); padding: 28px; display: flex; flex-direction: column; gap: 14px; font-size: 15px; line-height: 1.6; }
+  .mairie__carte--bleu { background: var(--c-municipale-soft); }
+  .mairie__carte--orange { background: var(--c-associations-soft); }
+  .mairie__carte--vert { background: var(--c-quotidien-soft); }
+  .mairie__titre { font-size: 26px; font-weight: 700 !important; letter-spacing: -0.01em; }
+  .mairie__horaires { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; }
+  .mairie__horaires dt { font-weight: 600; }
+  .mairie__horaires dd { margin: 0; }
+  .mairie__liens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-weight: 700; }
+  .mairie__carte--orange a { color: #9A3412; text-decoration: underline; text-underline-offset: 3px; }
+  .mairie__carte--vert a { color: #17603C; text-decoration: underline; text-underline-offset: 3px; }
+  .mairie__etat { font-size: 17px; }
+</style>

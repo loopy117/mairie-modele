@@ -3,10 +3,37 @@ import Img from '../components/Img.astro';
 import Boutons from '../components/Boutons.astro';
 import Sillage from '../components/Sillage.astro';
 import { composantsIllustrations } from '../illustrations';
-const { variant = 'plein-ecran', background = 'clair', spacing, id, surtitre, titre, texte, image, illustration, ctas = [], points = [] } = Astro.props;
+import Silhouette from '../partials/Silhouette.astro';
+const { variant = 'plein-ecran', background = 'clair', spacing, id, surtitre, titre, texte, image, illustration, ctas = [], points = [], accent, recherche } = Astro.props;
+// Variante commune : un mot du titre en couleur
+const [avant, apres] = accent && titre.includes(accent) ? [titre.slice(0, titre.indexOf(accent)), titre.slice(titre.indexOf(accent) + accent.length)] : [titre, ''];
 const Illustration = illustration ? composantsIllustrations[illustration.nom as keyof typeof composantsIllustrations] : null;
-const sombre = variant === 'plein-ecran' || background === 'sombre' || background === 'accent' || background === 'sillage-sombre';
+const sombre = variant === 'plein-ecran' || variant === 'commune' || background === 'sombre' || background === 'accent' || background === 'sillage-sombre';
 ---
+{variant === 'commune' ? (
+<section id={id} class="hero hero--commune on-dark" aria-labelledby="titre-accueil">
+  <div class="container hc__grille">
+    <div class="hc__texte">
+      {surtitre && <p class="hc__pastille">{surtitre}</p>}
+      <h1 id="titre-accueil" class="hc__titre">{avant}{accent && <span class="hc__accent">{accent}</span>}{apres}</h1>
+      {texte && <p class="hc__intro">{texte}</p>}
+      {recherche && (
+        <form id="recherche" class="hc__recherche" role="search" action="/recherche" method="get">
+          <label for="champ-recherche" class="hc__label">{recherche.label}</label>
+          <div class="hc__champ">
+            <input id="champ-recherche" name="q" type="search" autocomplete="off" aria-describedby={recherche.exemples ? 'aide-recherche' : undefined} />
+            <button type="submit">Rechercher</button>
+          </div>
+          {recherche.exemples && <p id="aide-recherche" class="hc__aide">Exemples : {recherche.exemples}</p>}
+        </form>
+      )}
+      <Boutons ctas={ctas} />
+    </div>
+    {image && <div class="hc__media"><Img image={image} priorite sizes="(min-width: 1000px) 46vw, 100vw" largeurs={[640, 960, 1280]} /></div>}
+  </div>
+  <Silhouette blanc class="hc__silhouette" />
+</section>
+) : (
 <section id={id} class:list={['hero', `hero--${variant}`, `bg-${variant === 'plein-ecran' ? 'sombre' : background}`, `sp-${spacing}`, sombre && 'on-dark']}>
   {variant !== 'plein-ecran' && background.startsWith('sillage') && <Sillage variante={background === 'sillage' ? 'clair' : 'sombre'} />}
   {variant === 'plein-ecran' && image && (
@@ -35,6 +62,7 @@ const sombre = variant === 'plein-ecran' || background === 'sombre' || backgroun
     )}
   </div>
 </section>
+)}
 
 <style>
   .hero { position: relative; overflow: hidden; }
@@ -77,6 +105,27 @@ const sombre = variant === 'plein-ecran' || background === 'sombre' || backgroun
   .hero--split :global(.boutons) { gap: 16px; }
   .hero--split :global(.btn--secondaire) { padding-inline: 26px; }
   .hero__split-media :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-xl); }
+
+  /* commune : fond bleu, pastille jaune, recherche, photo arrondie, silhouette du village */
+  .hero--commune { background: var(--c-primary); color: #fff; }
+  .hc__grille { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 48px; align-items: center; padding-block: 56px clamp(110px, 15vw, 220px); }
+  .hc__texte { display: flex; flex-direction: column; align-items: flex-start; }
+  .hc__pastille { background: var(--c-soleil); color: var(--c-ink); font-weight: 700; font-size: 14px; padding: 6px 14px; border-radius: var(--radius-pill); }
+  .hc__titre { font-size: var(--fs-h1); font-weight: 800 !important; line-height: .95; letter-spacing: -0.03em; margin: 22px 0 20px; color: #fff; }
+  .hc__accent { color: var(--c-soleil); }
+  .hc__intro { font-size: var(--fs-lg); line-height: 1.5; max-width: 520px; color: var(--c-on-dark-body); margin-bottom: 32px; }
+  .hc__recherche { width: 100%; max-width: 560px; }
+  .hc__label { display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .hc__champ { display: flex; gap: 6px; background: #fff; border-radius: var(--radius-pill); padding: 6px 6px 6px 22px; }
+  .hc__champ:focus-within { outline: 3px solid var(--c-soleil); outline-offset: 3px; }
+  .hc__champ input { flex: 1; min-width: 0; border: 0; font: inherit; font-size: 16px; background: transparent; color: var(--c-ink); }
+  .hc__champ input:focus-visible { outline: none; box-shadow: none; }
+  .hc__champ button { border: 0; background: var(--c-accent); color: #fff; font: inherit; font-weight: 700; font-size: 15px; padding: 13px 22px; border-radius: var(--radius-pill); cursor: pointer; }
+  .hc__champ button:hover { background: #9C1249; }
+  .hc__aide { margin-top: 10px; font-size: 14px; color: var(--c-on-dark-body); }
+  .hc__texte :global(.boutons) { margin-top: 24px; }
+  .hc__media :global(img) { width: 100%; aspect-ratio: 5 / 4; object-fit: cover; border-radius: 28px 28px 28px 4px; }
+  .hero--commune :global(.hc__silhouette) { position: absolute; left: 0; right: 0; bottom: -2px; opacity: .55; }
 
   /* minimal : titre et texte, sans image */
   .hero--minimal { padding-block: 56px 32px; }

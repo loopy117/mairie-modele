@@ -32,6 +32,10 @@ export const spacing = z.enum(['compact', 'normal', 'large']).default('normal').
 export const icone = z.enum(Object.keys(icones) as [string, ...string[]]).describe('Icône du jeu fermé data/icones.json');
 export const metier = z.enum(Object.keys(taxonomies.metiers) as [string, ...string[]]).describe('Métier (data/taxonomies.json)');
 
+/** Couleurs de rubrique du thème (variables --c-<couleur> et --c-<couleur>-soft de tokens.css). */
+export const COULEURS = ['municipale', 'democratie', 'quotidien', 'associations', 'culture', 'or'] as const;
+export const couleur = z.enum(COULEURS).describe('Couleur de rubrique (menu, tuiles, cartes)');
+
 /** Options communes à tous les blocs. */
 export const optionsCommunes = {
   background,

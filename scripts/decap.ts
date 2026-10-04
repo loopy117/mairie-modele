@@ -24,7 +24,12 @@ import { TYPES_ENTREPRISE, JOURS } from '../src/schemas/site';
 import { tarifs as tarifsSchema } from '../src/schemas/tarifs';
 
 const VERSION_DECAP = '3.16.3';
-const DEPOT = process.env.DECAP_DEPOT || 'loopy117/mairie-modele';
+// Dépôt GitHub du site : variable, sinon celui de la construction (GitHub Actions), sinon le dépôt git local
+const depotGit = (): string => {
+  try { return execSync('git remote get-url origin', { encoding: 'utf8' }).trim().replace(/^.*github\.com[/:]/, '').replace(/\.git$/, ''); } catch { return ''; }
+};
+const DEPOT = process.env.DECAP_DEPOT || process.env.GITHUB_REPOSITORY || depotGit();
+if (!/^[\w.-]+\/[\w.-]+$/.test(DEPOT)) throw new Error('Dépôt GitHub du site introuvable : définir DECAP_DEPOT (ex. loopy117/monsite)');
 const R = process.cwd();
 const ADMIN = join(R, 'public/admin');
 

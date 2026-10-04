@@ -1,0 +1,85 @@
+---
+import Img from '../components/Img.astro';
+import Boutons from '../components/Boutons.astro';
+import Sillage from '../components/Sillage.astro';
+import { composantsIllustrations } from '../illustrations';
+const { variant = 'plein-ecran', background = 'clair', spacing, id, surtitre, titre, texte, image, illustration, ctas = [], points = [] } = Astro.props;
+const Illustration = illustration ? composantsIllustrations[illustration.nom as keyof typeof composantsIllustrations] : null;
+const sombre = variant === 'plein-ecran' || background === 'sombre' || background === 'accent' || background === 'sillage-sombre';
+---
+<section id={id} class:list={['hero', `hero--${variant}`, `bg-${variant === 'plein-ecran' ? 'sombre' : background}`, `sp-${spacing}`, sombre && 'on-dark']}>
+  {variant !== 'plein-ecran' && background.startsWith('sillage') && <Sillage variante={background === 'sillage' ? 'clair' : 'sombre'} />}
+  {variant === 'plein-ecran' && image && (
+    <div class="hero__media" aria-hidden={image.alt ? undefined : 'true'}>
+      <Img image={image} priorite sizes="100vw" class="hero__img" />
+      <div class="hero__voile"></div>
+    </div>
+  )}
+  <div class="container hero__grille">
+    <div class="hero__texte">
+      {surtitre && (variant === 'split'
+        ? <p class="eyebrow hero__surtitre">{surtitre}</p>
+        : <p class="hero__pastille"><span class="point" aria-hidden="true"></span>{surtitre}</p>)}
+      <h1 class="hero__titre">{titre}</h1>
+      {texte && <p class="hero__intro">{texte}</p>}
+      <Boutons ctas={ctas} />
+      {points.length > 0 && (
+        <ul class="hero__points">{points.map((p: string) => <li>{p}</li>)}</ul>
+      )}
+    </div>
+    {variant === 'split' && image && (
+      <div class="hero__split-media"><Img image={image} priorite sizes="(min-width: 900px) 50vw, 100vw" class="hero__img" /></div>
+    )}
+    {variant === 'split' && !image && Illustration && (
+      <div class="hero__split-media"><Illustration {...illustration} /></div>
+    )}
+  </div>
+</section>
+
+<style>
+  .hero { position: relative; overflow: hidden; }
+  .bg-clair { background: var(--c-surface); }
+  .bg-alt { background: var(--c-surface-alt); }
+  .bg-sombre { background: var(--c-surface-dark); }
+  .bg-accent { background: var(--c-surface-accent, var(--c-primary)); }
+  .bg-sillage { background: var(--c-surface); }
+  .bg-sillage-sombre { background: var(--c-surface-dark); }
+  .hero__grille { position: relative; z-index: 1; }
+  .hero__texte { max-width: 660px; display: flex; flex-direction: column; gap: 22px; }
+  .hero__pastille { align-self: flex-start; display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px; border-radius: var(--radius-pill); background: var(--c-primary); color: #fff; font-size: 12.5px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+  .point { width: 7px; height: 7px; border-radius: 50%; background: var(--c-accent); flex: none; }
+  .hero__titre { font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.025em; line-height: 1.04; color: var(--c-text); }
+  .hero__intro { font-size: var(--fs-lg); line-height: var(--lh-body); color: var(--c-text-muted); max-width: 560px; }
+  .hero__points { list-style: none; margin: 0; padding: 8px 0 0; display: flex; flex-wrap: wrap; gap: 10px 26px; }
+  .hero__points li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--c-text-muted); }
+  .hero__points li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: oklch(0.70 0.13 158); }
+  :global(.on-dark) .hero__titre { color: var(--c-on-dark); }
+  :global(.on-dark) .hero__intro { color: var(--c-on-dark-body); }
+  :global(.on-dark) .hero__points li { color: oklch(0.86 0.01 160); }
+
+  /* plein-écran : photo en fond, voile dégradé à gauche */
+  .hero--plein-ecran { min-height: 520px; display: flex; align-items: center; }
+  .hero--plein-ecran .hero__grille { padding-block: 64px; }
+  .hero__media { position: absolute; inset: 0; }
+  .hero__media :global(img), .hero__media :global(picture) { width: 100%; height: 100%; object-fit: cover; }
+  .hero__voile { position: absolute; inset: 0; background: linear-gradient(100deg, oklch(0.25 0.05 260 / 0.94) 0%, oklch(0.25 0.05 260 / 0.8) 42%, oklch(0.25 0.05 260 / 0.12) 78%, oklch(0.25 0.05 260 / 0) 100%); }
+  @media (max-width: 760px) { .hero__voile { background: oklch(0.25 0.05 260 / 0.82); } }
+
+  /* split : texte à gauche, image ou illustration à droite */
+  .hero--split { padding-block: clamp(56px, 7.2vw, 104px) clamp(64px, 7.8vw, 112px); }
+  .hero--split .hero__grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(460px, 100%), 1fr)); gap: clamp(40px, 5vw, 72px); align-items: center; }
+  .hero--split .hero__texte { gap: 32px; }
+  .hero--split .hero__titre { font-weight: 500; line-height: 1.02; }
+  .hero--split .hero__intro { font-size: var(--fs-xl); color: var(--c-text-body); max-width: 560px; }
+  .hero--split .hero__points { padding: 0; gap: 10px 28px; }
+  .hero--split .hero__points li { font-size: 15px; color: var(--c-text-muted); }
+  .hero--split .hero__points li::before { display: none; }
+  .hero--split :global(.boutons) { gap: 16px; }
+  .hero--split :global(.btn--secondaire) { padding-inline: 26px; }
+  .hero__split-media :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-xl); }
+
+  /* minimal : titre et texte, sans image */
+  .hero--minimal { padding-block: 56px 32px; }
+  .hero--minimal.bg-clair { background: var(--c-surface-alt); }
+  .hero--minimal .hero__titre { font-size: clamp(30px, 4vw, 46px); }
+</style>

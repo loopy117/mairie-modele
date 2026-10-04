@@ -1,8 +1,10 @@
 # Déploiement du site par rsync (SSH) vers le serveur xmediacreation (VPS).
 #  - push sur main          → production (dossier DOSSIER_PRODUCTION)
-#  - push sur une branche ia/… → recette (dossier DOSSIER_RECETTE), si la variable existe
+#  - push sur une branche ia/… (demande de l'espace client) → aperçu si DOSSIER_APERCU existe (le client relit
+#    et valide sa demande sur l'aperçu), sinon recette (DOSSIER_RECETTE), si la variable existe
 #  - push sur une branche cms/… (modification en attente dans l'éditeur) → aperçu (DOSSIER_APERCU, URL_APERCU),
 #    réservé aux comptes de l'espace client, avec correction des textes sur la page (scripts/apercu.ts)
+#  - « Voir l'aperçu » dans l'espace client (repository_dispatch « apercu ») : reconstruit l'aperçu pour une branche
 #  - lancement manuel possible depuis l'onglet Actions ; reconstruction chaque nuit (agenda, alerte)
 # Réglages : Settings → Secrets and variables → Actions (voir DEPLOIEMENT.md)
 name: Déploiement
@@ -11,25 +13,34 @@ on:
   push:
     branches: [main, 'ia/**', 'cms/**']
   workflow_dispatch:
+  repository_dispatch:
+    types: [apercu]
   # Chaque nuit : l'agenda ne garde que les rendez-vous à venir, l'alerte expirée disparaît du HTML
   schedule:
     - cron: '7 3 * * *'
 
 concurrency:
   # Un seul aperçu par site : la dernière modification enregistrée l'emporte
-  group: ${{ startsWith(github.ref, 'refs/heads/cms/') && 'apercu' || format('deploiement-{0}', github.ref) }}
+  group: ${{ (startsWith(github.event.client_payload.branche || github.ref_name, 'cms/') || github.event_name == 'repository_dispatch' || (startsWith(github.ref_name, 'ia/') && vars.DOSSIER_APERCU != '')) && 'apercu' || format('deploiement-{0}', github.ref) }}
   cancel-in-progress: true
 
 jobs:
   construire-et-deployer:
-    # Branche de l'éditeur sans aperçu configuré : rien à construire
-    if: ${{ !startsWith(github.ref, 'refs/heads/cms/') || vars.DOSSIER_APERCU != '' }}
+    # Branche de l'éditeur ou aperçu demandé, sans aperçu configuré : rien à construire
+    if: ${{ (github.event_name != 'repository_dispatch' && !startsWith(github.ref, 'refs/heads/cms/')) || vars.DOSSIER_APERCU != '' }}
     runs-on: ubuntu-latest
     env:
-      CIBLE: ${{ github.ref == 'refs/heads/main' && 'production' || (startsWith(github.ref, 'refs/heads/cms/') && 'apercu' || 'recette') }}
+      BRANCHE: ${{ github.event.client_payload.branche || github.ref_name }}
+      CIBLE: ${{ (github.event_name != 'repository_dispatch' && github.ref == 'refs/heads/main') && 'production' || ((startsWith(github.event.client_payload.branche || github.ref_name, 'cms/') || github.event_name == 'repository_dispatch' || (startsWith(github.ref_name, 'ia/') && vars.DOSSIER_APERCU != '')) && 'apercu' || 'recette') }}
     steps:
+      - name: Vérifier la branche demandée
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          [[ "$BRANCHE" =~ ^(ia|cms)/[A-Za-z0-9._/-]{1,200}$ ]] && [[ "$BRANCHE" != *..* ]] || { echo "::error::Branche refusée (format invalide)"; exit 1; }
+
       - uses: actions/checkout@v5
         with:
+          ref: ${{ env.BRANCHE }}
           fetch-depth: 0   # historique complet : date de mise en ligne des actes (src/lib/publication.ts)
 
       # Aperçu : code du site tel qu'il est sur main (composants, scripts à jour), avec seulement les contenus que
@@ -38,12 +49,13 @@ jobs:
         if: env.CIBLE == 'apercu'
         run: |
           git fetch -q origin main
-          BRANCHE=$(git rev-parse HEAD)
-          BASE=$(git merge-base origin/main "$BRANCHE")
-          git diff -z --name-only --diff-filter=AMR "$BASE" "$BRANCHE" -- content media data > modifies.lst
-          git diff -z --name-only --diff-filter=D "$BASE" "$BRANCHE" -- content media data > supprimes.lst
+          SHA=$(git rev-parse HEAD)
+          echo "APERCU_SHA=$SHA" >> "$GITHUB_ENV"
+          BASE=$(git merge-base origin/main "$SHA")
+          git diff -z --name-only --diff-filter=AMR "$BASE" "$SHA" -- content media data > modifies.lst
+          git diff -z --name-only --diff-filter=D "$BASE" "$SHA" -- content media data > supprimes.lst
           git -c advice.detachedHead=false checkout -q origin/main
-          [ -s modifies.lst ] && xargs -0 git checkout "$BRANCHE" -- < modifies.lst
+          [ -s modifies.lst ] && xargs -0 git checkout "$SHA" -- < modifies.lst
           [ -s supprimes.lst ] && xargs -0 git rm -q --ignore-unmatch -- < supprimes.lst
           echo "Contenus de la modification : $(tr '\0' '\n' < modifies.lst | wc -l) fichier(s) modifié(s), $(tr '\0' '\n' < supprimes.lst | wc -l) supprimé(s)"
           rm -f modifies.lst supprimes.lst
@@ -100,7 +112,7 @@ jobs:
         run: npx tsx scripts/apercu.ts
         env:
           APERCU: '1'
-          APERCU_BRANCHE: ${{ github.ref_name }}
+          APERCU_BRANCHE: ${{ env.BRANCHE }}
 
       - name: Préparer la clé SSH
         if: steps.dest.outputs.dossier != ''
@@ -148,6 +160,18 @@ jobs:
             --exclude '.htpasswd' --exclude '.ovhconfig' --exclude 'config*.php' \
             -e "ssh -i ~/.ssh/deploiement -p ${{ vars.SSH_PORT || '22' }} -o BatchMode=yes" \
             dist/ "${{ vars.SSH_UTILISATEUR }}@${{ vars.SSH_HOTE }}:${DOSSIER}/"
+
+      - name: Prévenir l'espace client (aperçu prêt)
+        if: env.CIBLE == 'apercu' && steps.dest.outputs.dossier != ''
+        env:
+          SECRET: ${{ secrets.XMEDIA_AI_SECRET }}
+          URL_PRODUCTION: ${{ vars.URL_PRODUCTION }}
+          URL_APERCU: ${{ steps.dest.outputs.url }}
+        run: |
+          [ -n "$SECRET" ] && [ -n "$URL_PRODUCTION" ] || { echo "Espace client non configuré"; exit 0; }
+          CORPS=$(jq -cn --arg b "$BRANCHE" --arg sha "$APERCU_SHA" --arg url "$URL_APERCU" --argjson ts "$(date +%s)" '{type:"apercu", branche:$b, sha:$sha, url:$url, ts:$ts}')
+          SIG=$(printf '%s' "$CORPS" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')
+          curl -sS -L --post301 --post302 -X POST "${URL_PRODUCTION%/}/xmedia-ai/webhook.php" -H 'Content-Type: application/json' -H "X-Xmedia-Signature: sha256=$SIG" -d "$CORPS" || true
 
       - name: Résumé
         if: steps.dest.outputs.dossier != '' && env.CIBLE != 'apercu'

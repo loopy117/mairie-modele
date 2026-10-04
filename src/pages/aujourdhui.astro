@@ -36,16 +36,16 @@ const alerteActive = alerteDonnees.actif && (!alerteDonnees.jusqu_au || alerteDo
       <section class="tuile">
         <h2>La mairie</h2>
         <p class="tuile__etat" id="mairie-etat">{site.horaires}</p>
-        <p class="tuile__detail">{site.adresse.rue}, {site.telephone}</p>
+        <p class="tuile__detail">{[site.adresse.rue, !site.telephone.includes('[') && site.telephone].filter(Boolean).join(', ')}</p>
       </section>
-      <section class="tuile">
+      {collectes.collectes.length > 0 && <section class="tuile">
         <h2>Collectes</h2>
         <p class="tuile__etat" id="collecte-etat">Voir le calendrier ci-dessous.</p>
         <ul class="tuile__detail">
           {collectes.collectes.map((c: any) => <li><strong>{c.type}</strong> : {c.jours.length ? c.jours.join(', ') : c.note}</li>)}
         </ul>
         <p class="tuile__note">{collectes.consigne}</p>
-      </section>
+      </section>}
     </div>
   </Section>
   <Section background="alt" titre="Cette semaine et la suivante">
@@ -81,7 +81,8 @@ const alerteActive = alerteDonnees.actif && (!alerteDonnees.jusqu_au || alerteDo
     // Collectes : aujourd'hui, sinon demain (pour sortir les bacs la veille)
     const auj = d.collectes.filter((c: any) => c.jours.includes(jour)).map((c: any) => c.type);
     const dem = d.collectes.filter((c: any) => c.jours.includes(demain)).map((c: any) => c.type);
-    document.getElementById('collecte-etat')!.textContent = auj.length ? `Aujourd'hui : ${auj.join(', ').toLowerCase()}.` : dem.length ? `Demain : ${dem.join(', ').toLowerCase()} (sortez les bacs ce soir).` : "Pas de collecte aujourd'hui ni demain.";
+    const etatCollecte = document.getElementById('collecte-etat');
+    if (etatCollecte) etatCollecte.textContent = auj.length ? `Aujourd'hui : ${auj.join(', ').toLowerCase()}.` : dem.length ? `Demain : ${dem.join(', ').toLowerCase()} (sortez les bacs ce soir).` : "Pas de collecte aujourd'hui ni demain.";
   }
 </script>
 <style>

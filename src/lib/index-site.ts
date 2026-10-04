@@ -56,8 +56,8 @@ export function construireIndex(pages: Element[], collections: Record<NomCollect
   return index;
 }
 
-export interface EntreeNav { page?: string; element?: string; collection?: NomCollection; href?: string; label?: string; enfants?: EntreeNav[] }
-export interface LienResolu { label: string; href: string; visible: boolean; probleme?: { grave: boolean; message: string }; enfants?: LienResolu[] }
+export interface EntreeNav { page?: string; element?: string; collection?: NomCollection; href?: string; label?: string; couleur?: string; enfants?: EntreeNav[] }
+export interface LienResolu { label: string; href: string; visible: boolean; couleur?: string; probleme?: { grave: boolean; message: string }; enfants?: LienResolu[] }
 
 /** Transforme une entrée de menu.json / footer.json en lien. Une cible en brouillon est masquée. */
 export function resoudreEntree(e: EntreeNav, index: Map<string, EntreeIndex>): LienResolu {
@@ -65,7 +65,7 @@ export function resoudreEntree(e: EntreeNav, index: Map<string, EntreeIndex>): L
   if (e.page) url = e.page;
   else if (e.element) { const [col, ...id] = e.element.split('/'); url = urlElement(col as NomCollection, id.join('/')); }
   else if (e.collection) url = urlArchive(e.collection);
-  else if (e.href) return { label: e.label ?? e.href, href: e.href, visible: true };
+  else if (e.href) return { label: e.label ?? e.href, href: e.href, visible: true, couleur: e.couleur };
 
   const cible = url ? index.get(url) : undefined;
   const enfants = e.enfants?.map((x) => resoudreEntree(x, index));
@@ -75,5 +75,5 @@ export function resoudreEntree(e: EntreeNav, index: Map<string, EntreeIndex>): L
   if (!cible.publie) {
     return { label: e.label ?? cible.titre, href: url, visible: false, enfants, probleme: { grave: false, message: `« ${cible.titre} » (${url}) est en brouillon : entrée masquée` } };
   }
-  return { label: e.label ?? cible.titre, href: url, visible: true, enfants };
+  return { label: e.label ?? cible.titre, href: url, visible: true, couleur: e.couleur, enfants };
 }

@@ -1,14 +1,14 @@
 ---
-// Polices hébergées avec le site (paquets @fontsource) : rien n'est demandé à Google
-import '@fontsource-variable/bitter/wght.css';
-import '@fontsource-variable/figtree/wght.css';
-import '@fontsource/ibm-plex-mono/latin-500.css';
-import policeTitre from '@fontsource-variable/bitter/files/bitter-latin-wght-normal.woff2?url';
-import policeTexte from '@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url';
+// Polices hébergées avec le site (paquets @fontsource), propres à chaque site : src/site/polices.ts
+import * as polices from '../site/polices';
+const prechargees = [...new Set([(polices as any).policeTitre, (polices as any).policeTexte].filter(Boolean))] as string[];
 import '../styles/tokens.css';
 import '../styles/base.css';
+// Retouches propres au site (fichier du site, chargé après le socle)
+import '../site/site.css';
 import Header from '../partials/Header.astro';
 import Footer from '../partials/Footer.astro';
+import BoutonModifier from '../partials/BoutonModifier.astro';
 import FilAriane from '../partials/FilAriane.astro';
 import siteBrut from '../../data/site.json';
 import partage from '../../data/partage.json';
@@ -67,17 +67,18 @@ const donnees = seo.noindex ? [] : [graphe(site, base, { url, titre, description
     {partage.favicon_svg && <link rel="icon" href="/favicon.svg" type="image/svg+xml" />}
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content={partage.fond} />
-    <link rel="preload" href={policeTitre} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={policeTexte} as="font" type="font/woff2" crossorigin />
+    {prechargees.map((p) => <link rel="preload" href={p} as="font" type="font/woff2" crossorigin />)}
     {donnees.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
   </head>
   <body>
     <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+    <a class="lien-evitement" href="#menu">Aller au menu</a>
     <Header courant={url} landing={gabarit === 'landing'} />
     <main id="contenu" tabindex="-1" {...(indexerRecherche ? { 'data-pagefind-body': '', 'data-pagefind-filter': `type:${typeRecherche}`, 'data-pagefind-meta': `title:${url === '/' ? `Accueil · ${site.nom}` : titre}` } : {})}>
       {filAriane && <FilAriane url={url} titre={titre} />}
       <slot />
     </main>
     <Footer />
+    <BoutonModifier />
   </body>
 </html>

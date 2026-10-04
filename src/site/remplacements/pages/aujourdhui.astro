@@ -1,0 +1,99 @@
+---
+/**
+ * « Aujourd'hui dans la commune » : vue générée à partir des contenus existants, sans saisie supplémentaire.
+ * Horaires de la mairie, collectes du jour, rendez-vous de la semaine, travaux en cours, dernières publications.
+ * Le site est reconstruit chaque nuit ; ce qui dépend du jour (ouvert ou fermé, collecte) est recalculé dans le
+ * navigateur, pour rester juste même entre deux reconstructions.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import Disposition from '../dispositions/Disposition.astro';
+import { executer } from '../lib/requete';
+import { urlElement } from '../lib/urls';
+import { dateLongue } from '../lib/publication';
+import site from '../../data/site.json';
+import collectes from '../../data/collectes.json';
+import alerteDonnees from '../../data/alerte.json';
+const el = async (nom: string) => (await getCollection(nom as any)).map((e: any) => ({ id: e.id, data: e.data }));
+const dans15 = new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10);
+const agenda = executer(await el('agenda'), { filtre: { date_fin_ou_date: { apres: 'aujourdhui' }, date: { avant: dans15 } }, ordre: 'date asc', nombre: 8 });
+const travaux = executer(await el('projets'), { filtre: { avancement: 'travaux' }, ordre: 'date desc', nombre: 4 });
+const publications = [
+  ...executer(await el('actualites'), { ordre: 'date desc', nombre: 5 }).map((e) => ({ ...e, nom: 'actualites', type: 'Actualité' })),
+  ...executer(await el('actes'), { ordre: 'date desc', nombre: 5 }).map((e) => ({ ...e, nom: 'actes', type: 'Acte officiel' })),
+  ...executer(await el('documents'), { ordre: 'date desc', nombre: 5 }).map((e) => ({ ...e, nom: 'documents', type: 'Document' })),
+].sort((a, b) => +new Date(b.data.date) - +new Date(a.data.date)).slice(0, 6);
+const donnees = { horaires: (site as any).horaires_detail ?? [], collectes: collectes.collectes };
+const alerteActive = alerteDonnees.actif && (!alerteDonnees.jusqu_au || alerteDonnees.jusqu_au >= new Date().toISOString().slice(0, 10));
+---
+<Base titre="Aujourd'hui dans la commune" seo={{ titre: "Aujourd'hui dans la commune", description: "La mairie est-elle ouverte, quelle collecte aujourd'hui, les rendez-vous de la semaine, les travaux en cours et les dernières publications." }} url="/aujourdhui">
+  <Section>
+    <p class="surtitre" id="date-du-jour">{dateLongue(new Date())}</p>
+    <h1 class="h2">Aujourd'hui à {site.adresse.ville}</h1>
+    {alerteActive && <p class="rappel">Une information importante est affichée en haut de la page : <strong>{alerteDonnees.message}</strong></p>}
+    <div class="tuiles" id="aujourdhui" data-donnees={JSON.stringify(donnees)}>
+      <section class="tuile">
+        <h2>La mairie</h2>
+        <p class="tuile__etat" id="mairie-etat">{site.horaires}</p>
+        <p class="tuile__detail">{site.adresse.rue}, {site.telephone}</p>
+      </section>
+      <section class="tuile">
+        <h2>Collectes</h2>
+        <p class="tuile__etat" id="collecte-etat">Voir le calendrier ci-dessous.</p>
+        <ul class="tuile__detail">
+          {collectes.collectes.map((c: any) => <li><strong>{c.type}</strong> : {c.jours.length ? c.jours.join(', ') : c.note}</li>)}
+        </ul>
+        <p class="tuile__note">{collectes.consigne}</p>
+      </section>
+    </div>
+  </Section>
+  <Section background="alt" titre="Cette semaine et la suivante">
+    {agenda.length ? <Disposition elements={agenda} carte="evenement-carte" affichage="liste" /> : <p>Pas de rendez-vous prévu dans les quinze prochains jours. <a href="/agenda">Tout l'agenda</a></p>}
+  </Section>
+  {travaux.length > 0 && (
+    <Section titre="Travaux en cours">
+      <Disposition elements={travaux} carte="projet-carte" affichage="grid" options={{ colonnes: 2 }} />
+    </Section>
+  )}
+  <Section background="alt" titre="Dernières publications">
+    <ul class="publi" data-pagefind-ignore="all">
+      {publications.map((p) => <li><span class="publi__type">{p.type} · {dateLongue(p.data.date)}</span><a href={urlElement(p.nom as any, p.id)}>{p.data.titre}</a></li>)}
+    </ul>
+  </Section>
+</Base>
+<script>
+  const zone = document.getElementById('aujourdhui');
+  if (zone) {
+    const d = JSON.parse(zone.dataset.donnees || '{}');
+    const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+    const maintenant = new Date(), jour = JOURS[maintenant.getDay()], demain = JOURS[(maintenant.getDay() + 1) % 7];
+    const hm = (t: string) => t.replace(':', ' h ').replace(' h 00', ' h');
+    document.getElementById('date-du-jour')!.textContent = maintenant.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    // Mairie : ouverte, ouvre plus tard, ou fermée aujourd'hui
+    const creneaux = d.horaires.filter((h: any) => h.jours.includes(jour));
+    const minutes = maintenant.getHours() * 60 + maintenant.getMinutes();
+    const m = (t: string) => +t.slice(0, 2) * 60 + +t.slice(3);
+    const ouvert = creneaux.find((h: any) => minutes >= m(h.ouverture) && minutes < m(h.fermeture));
+    const plusTard = creneaux.find((h: any) => minutes < m(h.ouverture));
+    document.getElementById('mairie-etat')!.textContent = ouvert ? `Ouverte en ce moment, jusqu'à ${hm(ouvert.fermeture)}.`
+      : plusTard ? `Fermée pour l'instant : ouvre à ${hm(plusTard.ouverture)}.` : creneaux.length ? 'Fermée pour le reste de la journée.' : "Fermée aujourd'hui.";
+    // Collectes : aujourd'hui, sinon demain (pour sortir les bacs la veille)
+    const auj = d.collectes.filter((c: any) => c.jours.includes(jour)).map((c: any) => c.type);
+    const dem = d.collectes.filter((c: any) => c.jours.includes(demain)).map((c: any) => c.type);
+    document.getElementById('collecte-etat')!.textContent = auj.length ? `Aujourd'hui : ${auj.join(', ').toLowerCase()}.` : dem.length ? `Demain : ${dem.join(', ').toLowerCase()} (sortez les bacs ce soir).` : "Pas de collecte aujourd'hui ni demain.";
+  }
+</script>
+<style>
+  .surtitre { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--c-eyebrow); font-weight: 600; }
+  .rappel { margin-top: 14px; padding: 12px 16px; border-radius: 10px; background: var(--c-surface-alt); }
+  .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 24px; }
+  .tuile { padding: 22px 24px; border: 1px solid var(--c-border); border-radius: var(--radius-lg); background: var(--c-surface); display: flex; flex-direction: column; gap: 8px; }
+  .tuile h2 { font-size: var(--fs-xl); }
+  .tuile__etat { font-size: var(--fs-lg); font-weight: 700; color: var(--c-ink); }
+  .tuile__detail { color: var(--c-text-body); margin: 0; padding-left: 18px; } p.tuile__detail { padding: 0; }
+  .tuile__note { font-size: 14px; color: var(--c-text-muted); }
+  .publi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .publi li { display: flex; flex-direction: column; gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--c-border); }
+  .publi__type { font-size: 13px; color: var(--c-text-muted); } .publi a { font-weight: 700; font-size: 17px; }
+</style>

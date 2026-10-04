@@ -5,6 +5,7 @@
  * l'envoi se fait sur place avec messages d'erreur par champ.
  */
 import Section from '../components/Section.astro';
+import ChampPrecision from '../components/ChampPrecision.astro';
 import site from '../../data/site.json';
 import taxonomies from '../../data/taxonomies.json';
 import { indexSite } from '../lib/site';
@@ -34,6 +35,15 @@ const defs: Record<string, { label: string; type: string; autocomplete?: string;
 // message : obligatoire s'il est affiché (un formulaire métier peut s'en passer, ex. audit)
 const oblig = new Set([...obligatoires, ...(champs.includes('message') ? ['message'] : [])]);
 const enTete = !!metier?.precisions_en_tete;
+// Précisions principales : formulaire de demande complet, par groupes (fieldset), après les coordonnées
+const principales = !!(metier as any)?.precisions_principales;
+const groupes: { titre?: string; champs: any[] }[] = [];
+if (principales) for (const p of precisions.filter((x: any) => x.groupe !== ((metier?.libelles as any)?.coordonnees ?? 'Vos coordonnées'))) {
+  const dernier = groupes.at(-1);
+  if (dernier && dernier.titre === (p as any).groupe) dernier.champs.push(p); else groupes.push({ titre: (p as any).groupe, champs: [p] });
+}
+const Enveloppe = principales ? 'fieldset' : 'div';
+const titreCoordonnees = (metier?.libelles as any)?.coordonnees ?? 'Vos coordonnées';
 const carte = variant === 'carte';
 // Libellés propres au formulaire métier (data/formulaires.json → libelles)
 for (const [c, l] of Object.entries(metier?.libelles ?? {})) if (defs[c]) defs[c].label = l;
@@ -60,20 +70,11 @@ const lienConfidentialite = confidentialite?.publie ? '/confidentialite' : null;
       </div>
       {enTete && (
         <div class="fm__grille fm__grille--pile">
-          {precisions.filter((p: any) => p.type !== 'photos').map((p: any) => {
-            const idc = `f-p-${p.id}`;
-            return (
-              <div class="fm__champ">
-                <label for={idc}>{p.label}</label>
-                {p.type === 'choix'
-                  ? <select id={idc} name={`p_${p.id}`}><option value="">Choisir…</option>{p.options.map((o: string) => <option>{o}</option>)}</select>
-                  : <input id={idc} name={`p_${p.id}`} type="text" inputmode={p.type === 'url' ? 'url' : undefined} autocomplete={p.type === 'url' ? 'url' : undefined} maxlength="200" placeholder={p.aide} pattern={p.type === 'url' ? '(https?://)?[^\\s]+\\.[^\\s]{2,}' : undefined} title={p.type === 'url' ? 'Une adresse web, par exemple www.monentreprise.fr' : undefined} />}
-                <p class="fm__erreur" data-erreur={`p_${p.id}`}></p>
-              </div>
-            );
-          })}
+          {precisions.filter((p: any) => p.type !== 'photos').map((p: any) => <ChampPrecision p={p} />)}
         </div>
       )}
+      <Enveloppe class={principales ? 'fm__groupe' : 'fm__transparent'}>
+      {principales && <legend>{titreCoordonnees}</legend>}
       <div class:list={['fm__grille', (enTete || carte) && 'fm__grille--pile']}>
         {champs.map((c: string) => {
           const d = defs[c];
@@ -95,35 +96,25 @@ const lienConfidentialite = confidentialite?.publie ? '/confidentialite' : null;
           );
         })}
       </div>
-      {metier && champs.includes('telephone') && champs.includes('email') && <p class="fm__aide">Indiquez au moins un téléphone ou un e-mail pour que nous puissions vous répondre.</p>}
+      {principales && precisions.some((p: any) => p.groupe === titreCoordonnees) && (
+        <div class="fm__grille">{precisions.filter((p: any) => p.groupe === titreCoordonnees).map((p: any) => <ChampPrecision p={p} requisVisible />)}</div>
+      )}
+      {metier && champs.includes('telephone') && champs.includes('email') && !(oblig.has('telephone') && oblig.has('email')) && <p class="fm__aide">Indiquez au moins un téléphone ou un e-mail pour que nous puissions vous répondre.</p>}
+      </Enveloppe>
+      {principales && groupes.map((g) => (
+        <fieldset class="fm__groupe">
+          {g.titre && <legend>{g.titre}</legend>}
+          <div class="fm__grille">{g.champs.map((p: any) => <ChampPrecision p={p} requisVisible />)}</div>
+        </fieldset>
+      ))}
       {metier?.urgence && (
         <label class="fm__urgent"><input type="checkbox" name="urgence" value="1" /> {metier.urgence}</label>
       )}
-      {precisions.length > 0 && !enTete && (
+      {precisions.length > 0 && !enTete && !principales && (
         <details class="fm__plus" open={metier?.precisions_ouvertes || undefined}>
           <summary>Pour une réponse plus précise <span class="fm__option">(facultatif)</span></summary>
           <div class="fm__grille">
-            {precisions.map((p: any) => {
-              const idc = `f-p-${p.id}`;
-              return (
-                <div class:list={['fm__champ', p.type === 'photos' && 'fm__champ--large']}>
-                  <label for={idc}>{p.label}</label>
-                  {p.type === 'choix' ? (
-                    <select id={idc} name={`p_${p.id}`}><option value="">Choisir…</option>{p.options.map((o: string) => <option>{o}</option>)}</select>
-                  ) : p.type === 'texte' ? (
-                    <input id={idc} name={`p_${p.id}`} type="text" maxlength="200" placeholder={p.aide} />
-                  ) : p.type === 'url' ? (
-                    <input id={idc} name={`p_${p.id}`} type="text" inputmode="url" autocomplete="url" maxlength="200" placeholder={p.aide} pattern="(https?://)?[^\s]+\.[^\s]{2,}" title="Une adresse web, par exemple www.monentreprise.fr" />
-                  ) : (
-                    <>
-                      <input id={idc} name="photos[]" type="file" accept="image/jpeg,image/png,image/webp" multiple data-photos />
-                      <p class="fm__option">{p.max} photos au plus, JPEG, PNG ou WebP.</p>
-                    </>
-                  )}
-                  <p class="fm__erreur" data-erreur={p.type === 'photos' ? 'photos' : `p_${p.id}`}></p>
-                </div>
-              );
-            })}
+            {precisions.map((p: any) => <ChampPrecision p={p} />)}
           </div>
         </details>
       )}
@@ -178,13 +169,23 @@ const lienConfidentialite = confidentialite?.publie ? '/confidentialite' : null;
       form.querySelector<HTMLInputElement>('[data-duree]')!.value = String(Math.round(performance.now() - debut));
       form.querySelectorAll<HTMLElement>('[data-erreur]').forEach((e) => (e.textContent = ''));
       form.querySelectorAll('[aria-invalid]').forEach((e) => e.removeAttribute('aria-invalid'));
-      if (!form.checkValidity()) {
-        for (const el of form.querySelectorAll<HTMLInputElement>(':invalid')) {
+      // Cases à cocher obligatoires : au moins une
+      let casesVides: HTMLElement | null = null;
+      for (const g of form.querySelectorAll<HTMLElement>('[data-cases][data-requis]')) {
+        if (!g.querySelector('input:checked')) {
+          const zone = form.querySelector<HTMLElement>(`[data-erreur="p_${g.dataset.cases}"]`);
+          if (zone) zone.textContent = 'Cochez au moins une case.';
+          g.setAttribute('aria-invalid', 'true');
+          casesVides ??= g;
+        }
+      }
+      if (!form.checkValidity() || casesVides) {
+        for (const el of form.querySelectorAll<HTMLInputElement>('input:invalid, select:invalid, textarea:invalid')) {
           el.setAttribute('aria-invalid', 'true');
           const zone = form.querySelector<HTMLElement>(`[data-erreur="${el.name}"]`);
           if (zone) zone.textContent = el.validity.valueMissing ? 'Ce champ est obligatoire.' : 'Format invalide.';
         }
-        form.querySelector<HTMLElement>(':invalid')?.focus();
+        (form.querySelector<HTMLElement>('input:invalid, select:invalid, textarea:invalid') ?? casesVides?.querySelector<HTMLElement>('input'))?.focus();
         return;
       }
       // Formulaire métier : un moyen de contact au moins
@@ -225,7 +226,7 @@ const lienConfidentialite = confidentialite?.publie ? '/confidentialite' : null;
           for (const [champ, msg] of Object.entries<string>(r.erreurs ?? {})) {
             const zone = form.querySelector<HTMLElement>(`[data-erreur="${champ}"]`);
             if (zone) zone.textContent = msg;
-            form.querySelector(`[name="${champ}"]`)?.setAttribute('aria-invalid', 'true');
+            (form.querySelector(`[name="${champ}"]`) ?? form.querySelector(`[data-cases="${champ.slice(2)}"]`))?.setAttribute('aria-invalid', 'true');
           }
         }
       } catch {
@@ -238,7 +239,8 @@ const lienConfidentialite = confidentialite?.publie ? '/confidentialite' : null;
   }
 </script>
 
-<style>
+<style is:global>
+  /* Global : les champs des précisions viennent du composant ChampPrecision (classes fm__ propres au formulaire) */
   .fm { display: grid; gap: 44px; align-items: start; }
   .fm--avec-coordonnees { grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); }
   @media (max-width: 860px) { .fm--avec-coordonnees { grid-template-columns: 1fr; } }
@@ -271,14 +273,14 @@ const lienConfidentialite = confidentialite?.publie ? '/confidentialite' : null;
   .fm__statut[data-etat='ok'] { color: var(--c-primary); font-weight: 600; }
   .fm__statut[data-etat='erreur'] { color: oklch(0.5 0.2 25); font-weight: 600; }
   /* Formulaire posé sur un fond sombre ou coloré (accent) */
-  :global(.on-dark) .fm__champ label, :global(.on-dark) .fm__urgent { color: var(--c-on-dark); }
-  :global(.on-dark) .fm__rgpd, :global(.on-dark) .fm__aide, :global(.on-dark) .fm__option { color: var(--c-on-dark-body); }
-  :global(.on-dark) .fm__requis { color: var(--c-on-dark); }
-  :global(.on-dark) .fm__rgpd a { color: var(--c-on-dark); text-decoration: underline; }
-  :global(.on-dark) .fm__statut[data-etat='ok'] { color: var(--c-on-dark); }
+  .on-dark .fm__champ label, .on-dark .fm__urgent { color: var(--c-on-dark); }
+  .on-dark .fm__rgpd, .on-dark .fm__aide, .on-dark .fm__option { color: var(--c-on-dark-body); }
+  .on-dark .fm__requis { color: var(--c-on-dark); }
+  .on-dark .fm__rgpd a { color: var(--c-on-dark); text-decoration: underline; }
+  .on-dark .fm__statut[data-etat='ok'] { color: var(--c-on-dark); }
   /* L'encadré « précisions » reste clair : textes sombres à l'intérieur */
-  :global(.on-dark) .fm__plus, :global(.on-dark) .fm__plus .fm__champ label { color: var(--c-ink, var(--c-text)); }
-  :global(.on-dark) .fm__plus .fm__aide, :global(.on-dark) .fm__plus .fm__option { color: var(--c-text-muted); }
+  .on-dark .fm__plus, .on-dark .fm__plus .fm__champ label { color: var(--c-ink, var(--c-text)); }
+  .on-dark .fm__plus .fm__aide, .on-dark .fm__plus .fm__option { color: var(--c-text-muted); }
   /* carte : texte à gauche, formulaire dans une carte blanche à droite */
   .fm--carte { grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: clamp(40px, 5.5vw, 80px); align-items: center; }
   .fm__entete { display: flex; flex-direction: column; gap: 24px; }
@@ -290,9 +292,20 @@ const lienConfidentialite = confidentialite?.publie ? '/confidentialite' : null;
   .fm--carte .fm__actions .btn { width: 100%; background: var(--c-primary); color: #fff; font-size: var(--fs-md); font-weight: 600; margin-top: 8px; }
   .fm--carte .fm__rgpd { font-size: 12.5px; }
   .fm__grille--pile { grid-template-columns: 1fr; gap: 18px; }
+  /* Formulaire de demande complet : groupes de champs (coordonnées, manifestation, espaces…) */
+  .fm__transparent { display: contents; }
+  .fm__groupe { margin: 0; padding: 18px 20px 20px; border: 1.5px solid var(--c-border); border-radius: 14px; background: var(--c-surface); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .fm__groupe > legend { padding: 0 8px; margin-left: -8px; font-family: var(--font-title, inherit); font-size: var(--fs-lg); font-weight: 700; color: var(--c-text-strong); }
+  .on-dark .fm__groupe, .on-dark .fm__groupe .fm__champ label, .on-dark .fm__groupe legend { color: var(--c-ink, var(--c-text)); }
+  .fm__cases { border: 0; padding: 0; margin: 0; min-width: 0; }
+  .fm__cases > legend { padding: 0; font-size: var(--fs-base); font-weight: 600; color: var(--c-text-strong); margin-bottom: 6px; }
+  .fm__cases-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 8px 16px; }
+  .fm__case { display: flex; align-items: flex-start; gap: 10px; font-weight: 400 !important; cursor: pointer; padding: 8px 0; min-height: 44px; box-sizing: border-box; }
+  .fm .fm__case input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--c-primary); padding: 0; }
+  .fm__cases[aria-invalid='true'] .fm__cases-liste { outline: 2px solid oklch(0.55 0.2 25); outline-offset: 6px; border-radius: 6px; }
   .fm__note { font-size: 14px; color: var(--c-text-muted); margin-top: -6px; }
   .fm__coord { display: flex; flex-direction: column; gap: 8px; padding: 24px; border-radius: var(--radius-lg); background: var(--c-surface-alt); font-size: var(--fs-base); color: var(--c-text-body); }
-  :global(.bg-alt) .fm__coord { background: var(--c-surface); }
+  .bg-alt .fm__coord { background: var(--c-surface); }
   .fm__coord a { color: var(--c-text); }
   .fm__tel { font-size: 22px; font-weight: 700; }
   .fm__urgence span { color: var(--c-accent); }

@@ -34,6 +34,7 @@ const heure = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'heure attendue au f
 export const site = z
   .object({
     nom: z.string().min(2).max(80),
+    modele: z.literal('collectivite').describe('Modèle du site (socle) : collectivité'),
     baseline: z.string().max(80),
     description: z.string().max(300),
     url: z.string().url(),

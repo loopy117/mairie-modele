@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "validate": "tsx scripts/validate.ts",
+    "validate": "node scripts/socle-verifier.mjs && tsx scripts/validate.ts",
     "catalogue": "tsx scripts/catalogue.ts",
     "build": "npm run validate && npm run contexte && npm run decap && astro build && npm run maillage && node scripts/copier-medias.mjs && node scripts/phototheque.mjs && node scripts/recherche.mjs && node scripts/partage.mjs images && tsx scripts/diffusion.ts && node scripts/indexnow.mjs preparer",
     "preview": "astro preview",
@@ -21,7 +21,9 @@
   },
   "dependencies": {
     "@fontsource-variable/bitter": "^5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/figtree": "^5.3.0",
+    "@fontsource-variable/public-sans": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "astro": "^7.3.5",
     "leaflet": "^1.9.4",

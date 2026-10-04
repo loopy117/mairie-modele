@@ -1,0 +1,13 @@
+---
+/**
+ * Emblème de la commune (fichier propre au site) : décoratif, toujours accompagné du nom écrit. Par défaut, le logo
+ * du site ; à remplacer par le blason ou l'emblème de la commune. blanc : sur fond sombre.
+ */
+import Logo from './Logo.astro';
+interface Props { hauteur?: number; blanc?: boolean; class?: string }
+const { hauteur = 72, blanc = false, class: classe } = Astro.props;
+---
+<span class:list={['embleme', classe]} aria-hidden="true"><Logo taille={hauteur} variante={blanc ? 'sombre' : undefined} /></span>
+<style>
+  .embleme { display: block; width: auto; flex: none; }
+</style>

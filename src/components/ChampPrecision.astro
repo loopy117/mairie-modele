@@ -1,0 +1,52 @@
+---
+/**
+ * Un champ « précision » de formulaire métier (data/formulaires.json), quel que soit son type.
+ * Les contrôles du navigateur (required, min, max, pattern) aident le visiteur ; le serveur revérifie tout.
+ */
+interface Props { p: any; requisVisible?: boolean }
+const { p, requisVisible = false } = Astro.props;
+const idc = `f-p-${p.id}`;
+const nom = `p_${p.id}`;
+const requis = !!p.obligatoire;
+const aujourdhui = new Date().toISOString().slice(0, 10);
+const aideId = p.aide && !['texte', 'url'].includes(p.type) ? `${idc}-aide` : undefined;
+const decrit = [aideId, `${idc}-err`].filter(Boolean).join(' ');
+---
+{p.type === 'cases' ? (
+  <fieldset class="fm__champ fm__champ--large fm__cases" aria-describedby={decrit} data-cases={p.id} data-requis={requis || undefined}>
+    <legend>{p.label}{requisVisible && (requis ? <span class="fm__requis" aria-hidden="true"> *</span> : <span class="fm__option"> (facultatif)</span>)}</legend>
+    {p.aide && <p class="fm__option" id={aideId}>{p.aide}</p>}
+    <div class="fm__cases-liste">
+      {p.options.map((o: string, i: number) => (
+        <label class="fm__case"><input type="checkbox" name={`${nom}[]`} value={o} id={i === 0 ? idc : undefined} /> {o}</label>
+      ))}
+    </div>
+    <p class="fm__erreur" id={`${idc}-err`} data-erreur={nom}></p>
+  </fieldset>
+) : p.type === 'photos' ? (
+  <div class="fm__champ fm__champ--large">
+    <label for={idc}>{p.label}</label>
+    <input id={idc} name="photos[]" type="file" accept="image/jpeg,image/png,image/webp" multiple data-photos />
+    <p class="fm__option">{p.max} photos au plus, JPEG, PNG ou WebP.</p>
+    <p class="fm__erreur" data-erreur="photos"></p>
+  </div>
+) : (
+  <div class="fm__champ">
+    <label for={idc}>{p.label}{requisVisible && (requis ? <span class="fm__requis" aria-hidden="true"> *</span> : <span class="fm__option"> (facultatif)</span>)}</label>
+    {p.type === 'choix' ? (
+      <select id={idc} name={nom} required={requis} aria-describedby={decrit}><option value="">Choisir…</option>{p.options.map((o: string) => <option>{o}</option>)}</select>
+    ) : p.type === 'date' ? (
+      <input id={idc} name={nom} type="date" min={aujourdhui} required={requis} aria-describedby={decrit} />
+    ) : p.type === 'heure' ? (
+      <input id={idc} name={nom} type="time" required={requis} aria-describedby={decrit} />
+    ) : p.type === 'nombre' ? (
+      <input id={idc} name={nom} type="number" inputmode="numeric" min={p.min ?? 0} max={p.max} step="1" required={requis} aria-describedby={decrit} />
+    ) : p.type === 'url' ? (
+      <input id={idc} name={nom} type="text" inputmode="url" autocomplete="url" maxlength="200" placeholder={p.aide} required={requis} pattern="(https?://)?[^\s]+\.[^\s]{2,}" title="Une adresse web, par exemple www.monentreprise.fr" aria-describedby={decrit} />
+    ) : (
+      <input id={idc} name={nom} type="text" maxlength="200" placeholder={p.aide} required={requis} aria-describedby={decrit} />
+    )}
+    {aideId && <p class="fm__option" id={aideId}>{p.aide}</p>}
+    <p class="fm__erreur" id={`${idc}-err`} data-erreur={nom}></p>
+  </div>
+)}

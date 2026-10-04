@@ -1,5 +1,6 @@
 {
   "nom": "Commune de Saint-Exemple",
+  "modele": "collectivite",
   "baseline": "Site officiel de la commune",
   "description": "Saint-Exemple, commune fictive de démonstration : actualités, agenda, démarches, actes officiels et services de la mairie.",
   "url": "https://www.saint-exemple.fr",
