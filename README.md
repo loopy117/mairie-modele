@@ -1,6 +1,6 @@
 # Modèle de site de mairie — Commune de Saint-Exemple (fictive)
 
-Site statique Astro construit avec le système xmedia·ai, pour les communes : base de chaque nouveau site de mairie.
+Site statique Astro construit avec le système xmedia·ai, pour les communes : démonstration du modèle `collectivite` du socle commun (`loopy117/socle-sites`), qui sert désormais de base aux nouveaux sites de mairie.
 Saint-Exemple est une commune **fictive** : textes, noms et documents sont des exemples à remplacer.
 
 | Collection | Contenu | Page |
