@@ -49,6 +49,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Catalogue des blocs propre au site (modèle, métiers, icônes), lu par Claude avant de composer
+      - run: npm run catalogue
 
       - name: Récupérer la demande et les photos
         # Téléchargement signé depuis le site (webhook.php, type « export ») : les données restent

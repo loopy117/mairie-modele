@@ -1,6 +1,8 @@
 /**
  * Génère ai/catalogue.md à partir des schémas : blocs, champs, variantes,
  * limites, cartes, dispositions, collections. Ne jamais éditer à la main.
+ * Propre à chaque site (modèle, taxonomies, icônes, valeurs par défaut tirées de data/) : régénéré à chaque
+ * construction (npm run contexte) et avant chaque réalisation (workflow demande), jamais versionné.
  */
 import { writeFileSync } from 'node:fs';
 import { z } from 'astro/zod';
@@ -10,6 +12,12 @@ import { cartes } from '../src/cards/cartes';
 import { dispositions } from '../src/dispositions/dispositions';
 import taxonomies from '../data/taxonomies.json' with { type: 'json' };
 import icones from '../data/icones.json' with { type: 'json' };
+import site from '../data/site.json' with { type: 'json' };
+
+// Blocs et collections du modèle du site (src/schemas/modeles.ts ; absent de la variante collectivite : tout est proposé)
+const modeles: any = await import('../src/schemas/modeles').catch(() => null);
+const blocPropose = (nom: string): boolean => modeles?.blocDuSite?.(nom) ?? true;
+const collectionsProposees = new Set<string>(modeles?.collectionsDuSite?.() ?? Object.keys(collectionSchemas));
 
 const communs = new Set(['block', 'background', 'spacing', 'id']);
 
@@ -48,7 +56,7 @@ function tableChamps(schema: any, ignorer = new Set<string>()): string {
 
 let md = `# Catalogue du site — pour l'IA
 
-> Généré par \`npm run catalogue\` à partir des schémas. Ne pas modifier à la main.
+> Site : ${(site as any).nom ?? '?'} — modèle \`${(site as any).modele ?? 'entreprise'}\`. Généré par \`npm run catalogue\` à partir des schémas et de \`data/\` ; ne pas modifier à la main.
 > À lire avec \`ai/regles.md\`. Tout ce qui n'est pas dans ce catalogue n'existe pas.
 
 ## Options communes à tous les blocs
@@ -67,6 +75,7 @@ let md = `# Catalogue du site — pour l'IA
 `;
 
 for (const [nom, schema] of Object.entries(blocs)) {
+  if (!blocPropose(nom)) continue;
   const meta: any = (schema as any).meta?.() ?? {};
   const js: any = z.toJSONSchema(schema as any, { io: 'input', unrepresentable: 'any' });
   const variantes = js.properties?.variant?.enum;
@@ -83,7 +92,7 @@ md += `\n## Boucle : cartes, dispositions, requêtes
 
 | Carte | Collection | Rendu |
 | --- | --- | --- |
-${Object.entries(cartes).map(([k, v]) => `| \`${k}\` | \`${v.collection}\` | ${v.description} |`).join('\n')}
+${Object.entries(cartes).filter(([, v]) => collectionsProposees.has(v.collection)).map(([k, v]) => `| \`${k}\` | \`${v.collection}\` | ${v.description} |`).join('\n')}
 
 ### Dispositions (\`affichage\`) et leurs \`options\`
 
@@ -111,6 +120,7 @@ Tri : \`ordre: date desc\` ou liste \`[mis_en_avant desc, date desc]\`, ou \`ale
 `;
 
 for (const [nom, schema] of Object.entries(collectionSchemas)) {
+  if (!collectionsProposees.has(nom)) continue;
   md += `\n### \`${nom}\` — dossier \`content/${nom}/\`, un fichier \`<id>.md\`\n\n${(schema as any).description ?? ''}\n\n${tableChamps(schema, new Set(['sections']))}\n\nCorps Markdown facultatif après le frontmatter (affiché sur la page de détail). \`sections\` facultatif : blocs ajoutés après le corps.\n`;
 }
 

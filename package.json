@@ -11,7 +11,7 @@
     "preview": "astro preview",
     "photos": "tsx scripts/photos.ts",
     "import-media": "tsx scripts/import-media.ts",
-    "contexte": "tsx scripts/contexte-ia.ts",
+    "contexte": "tsx scripts/catalogue.ts && tsx scripts/contexte-ia.ts",
     "decap": "tsx scripts/decap.ts",
     "test": "tsx scripts/test-maillage.ts",
     "maillage": "tsx scripts/maillage.ts",

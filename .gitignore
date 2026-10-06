@@ -9,5 +9,6 @@ public/admin/decap/
 public/admin/config.yml
 public/admin/config.json
 ai/maillage.json
+ai/catalogue.md
 .cache/
 public/admin/leaflet/
