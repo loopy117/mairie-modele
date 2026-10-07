@@ -1,9 +1,9 @@
 {
  "socle": "socle-sites",
- "version": "1.3.1",
+ "version": "1.4.0",
  "modele": "collectivite",
- "commit": "eecc11d",
- "installe": "2026-10-07T13:58:08.353Z",
+ "commit": "61dde8e",
+ "installe": "2026-10-07T15:21:11.061Z",
  "motifs": {
   "socle": [
    ".github/workflows/**",
@@ -38,11 +38,12 @@
   "ai/regles.md": "747c838c001b310a0de67dd7bd980c8f3d5312e76b97c88deecc74d6c61ea794",
   "astro.config.mjs": "6651025fbe5031bbb9b920a8b55a4e5ce09eef912e0f5965025591073cab292e",
   "package-lock.json": "df286436986dfbe1b291d252e7fcdff2578b633338844324427d08d6b694d6d4",
-  "package.json": "13696f644af9237ee7d8b658a869f061c2b4c4f973071b7ef8bf2053a1e31172",
+  "package.json": "bac4e3ea40c4e085a3399a7ee6420bea51c57da2c5e7e9c9dd53898ed4fdef8c",
   "public/admin/.htaccess": "62e42c0573a92436c14391bdadf43e07fca27b004762dbb34001adffb2973e54",
   "public/admin/index.html": "db39af3ad2513e3c1cece9bf4787e0edb89cce059454246f493c739c5480c396",
   "public/admin/phototheque.js": "671e1a174553d23bd9d5d21bf63440bb73899fa3ea04acc8fc87075fa876d5c6",
   "public/admin/position.js": "3a79fe6daf941ee7e47611683279a9a5328cfa297b2d4d641281a2554fd628ab",
+  "scripts/alleger-css.mjs": "823347761bd9cdecbd94ee383032f513fdac2a2b82aae035acc0bacb6500271c",
   "scripts/apercu.ts": "e272c8f42a2fae198bdc73d64b474888898b47e6a65406929e2f2088af2cbbe8",
   "scripts/catalogue.ts": "310e07b5657bf602694e33c685fa2b657e927fa98b8e5da6e4ccb4de045b15fe",
   "scripts/contexte-ia.ts": "f045fff2d5eb9751c0717a38bdd8515475558cf87ca7adec6e11656ea29cefae",
