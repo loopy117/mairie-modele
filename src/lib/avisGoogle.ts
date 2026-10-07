@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 
 export interface AvisGoogle { auteur: string; profil?: string; note: number; texte: string; date?: string; lien?: string }
-export interface FicheGoogle { nom?: string; note: number; nombre: number; lien: string; maj?: string; avis: AvisGoogle[] }
+export interface FicheGoogle { nom?: string; note: number; nombre: number; lien: string; ecrire?: string; maj?: string; avis: AvisGoogle[] }
 
 const urlGoogle = (u: unknown): string | undefined => {
   if (typeof u !== 'string' || u.length > 600) return undefined;
@@ -38,7 +38,7 @@ export function ficheGoogle(): FicheGoogle | null {
     if (!(Number.isInteger(n) && n >= 1 && n <= 5) || !t || !auteur) return null;
     return { auteur, note: n, texte: t, profil: urlGoogle(a.profil), lien: urlGoogle(a.lien), date: /^\d{4}-\d{2}-\d{2}$/.test(a?.date ?? '') ? a.date : undefined };
   }).filter(Boolean) as AvisGoogle[];
-  return (cache = { nom: texte(d.nom, 120) || undefined, note: Math.round(note * 10) / 10, nombre, lien, maj: texte(d.maj, 30) || undefined, avis });
+  return (cache = { nom: texte(d.nom, 120) || undefined, note: Math.round(note * 10) / 10, nombre, lien, ecrire: urlGoogle(d.ecrire), maj: texte(d.maj, 30) || undefined, avis });
 }
 
 export const noteFr = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });

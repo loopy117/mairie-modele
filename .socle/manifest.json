@@ -1,9 +1,9 @@
 {
  "socle": "socle-sites",
- "version": "1.3.0",
+ "version": "1.3.1",
  "modele": "collectivite",
- "commit": "12f9b8f",
- "installe": "2026-10-07T09:10:19.896Z",
+ "commit": "eecc11d",
+ "installe": "2026-10-07T13:58:08.353Z",
  "motifs": {
   "socle": [
    ".github/workflows/**",
@@ -60,7 +60,7 @@
   "scripts/socle-verifier.mjs": "83bda7c977d7bacc4a37c2024ef432eb4f2f872411681bec9d964243835b66ee",
   "scripts/test-maillage.ts": "08c8b27d2e371c0d857d68be94e1c0ac87162cd3f4ee1be90aa8ab7d194c55b6",
   "scripts/validate.ts": "cc682967671e0bd89c4faab02a1fa976a67fb89959ece810d397d7e71961bede",
-  "src/blocks/AvisGoogle.astro": "4dd5ed947e48caf1422e0086bd6d339b2e28b3035c70eda81acb7c0e2de5d4b8",
+  "src/blocks/AvisGoogle.astro": "dc55effb86912b2820fdecb89a07ee3412a378b93014a5543cb2f42ae2d57498",
   "src/blocks/Boucle.astro": "e4ed9b5f713c37d6c7bbbcf747757ec670ee3f01878885ab171c1507b0639579",
   "src/blocks/Carte.astro": "70d6a1b310d4f70f0b7c41774499ce6e46349e0d72ac5ca2db25d4f19b8d8715",
   "src/blocks/Chiffres.astro": "2f355a9fda99a0754ab08ad82348e0016a06e9e033b1aaf4ec17006cd7e9ff24",
@@ -115,7 +115,7 @@
   "src/illustrations/noms.ts": "6cacaec289edcbcaee13a78e208ba581dc4d9c89f384b8e1355d66421f5f3b0f",
   "src/layouts/Base.astro": "50f1f5993c128cf1589bd7a49116fa7ff7417361b4114b6d72770e2973c7be75",
   "src/layouts/details.ts": "df3ef48c406d43d7cbc88dd5831a7a9ae8b605344dc16578adeef919c6465442",
-  "src/lib/avisGoogle.ts": "d968d3fb4d880fda255597d6c0d71b27aa44080e73077d94857b5b0186557eb6",
+  "src/lib/avisGoogle.ts": "fc7da966c4a3d5a950fbf8d6568ec282edcdea0aef2288d84630610989e4fbe0",
   "src/lib/collections.ts": "9f922b27a05d22120299e32d18b5a3028ae14d0b2f04386c23836a4b5a92e13c",
   "src/lib/contenu.ts": "f825725e088723d7c413112c21062c4d65d7a576ab41e28847697694d9fabfd4",
   "src/lib/donnees-structurees.ts": "1b456ed51a9a87af2a57bd1e0f577c6a4ebd5ce3f199264619716d0e3ba95601",
