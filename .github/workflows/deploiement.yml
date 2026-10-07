@@ -27,7 +27,8 @@ concurrency:
 jobs:
   construire-et-deployer:
     # Branche de l'éditeur ou aperçu demandé, sans aperçu configuré : rien à construire
-    if: ${{ (github.event_name != 'repository_dispatch' && !startsWith(github.ref, 'refs/heads/cms/')) || vars.DOSSIER_APERCU != '' }}
+    # Ces workflows servent aux sites ; dans le dépôt du socle lui-même (sans contenus) ils ne tournent pas
+    if: ${{ github.repository != 'loopy117/socle-sites' && ((github.event_name != 'repository_dispatch' && !startsWith(github.ref, 'refs/heads/cms/')) || vars.DOSSIER_APERCU != '') }}
     runs-on: ubuntu-latest
     env:
       BRANCHE: ${{ github.event.client_payload.branche || github.ref_name }}

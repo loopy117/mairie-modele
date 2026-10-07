@@ -1,9 +1,9 @@
 {
  "socle": "socle-sites",
- "version": "1.2.0",
+ "version": "1.3.0",
  "modele": "collectivite",
- "commit": "4e2723a",
- "installe": "2026-10-06T15:27:18.548Z",
+ "commit": "12f9b8f",
+ "installe": "2026-10-07T09:10:19.896Z",
  "motifs": {
   "socle": [
    ".github/workflows/**",
@@ -30,9 +30,9 @@
   ]
  },
  "fichiers": {
-  ".github/workflows/demande.yml": "5e0a56532cd47011964bbd5a0b8296cdb47f914ef378932aaf6cf8756697e60a",
-  ".github/workflows/deploiement.yml": "bc6495fe8fa7b587d461310fed2fb01e83b09020f6e778d5ff136ade72e1231f",
-  ".github/workflows/verification.yml": "28737a8952a08b1024b32c72c57c8b85627b4f03526ab484bce0eee1b39d23d9",
+  ".github/workflows/demande.yml": "9dda46a36e64185b73aa80141ba289941493b84c5986935352d244a3e45acae7",
+  ".github/workflows/deploiement.yml": "5f7924151c081441046d421bb27ba22669a6a812ddcaeb40b00cf584747c6214",
+  ".github/workflows/verification.yml": "aa5fe0d9f25d584987b6dfdd59cb8212e7c39383d29d8ba7a12ec8093fb5882e",
   ".gitignore": "83050c698c8474804025559cee2109790bfddcc79c407ea7c56de6e92a3dced2",
   "ai/prompt-realisation.md": "b47a645b8965e21bd9d81db681215f040c8102b6c1ff0709d4c62afee768157b",
   "ai/regles.md": "747c838c001b310a0de67dd7bd980c8f3d5312e76b97c88deecc74d6c61ea794",
@@ -60,6 +60,7 @@
   "scripts/socle-verifier.mjs": "83bda7c977d7bacc4a37c2024ef432eb4f2f872411681bec9d964243835b66ee",
   "scripts/test-maillage.ts": "08c8b27d2e371c0d857d68be94e1c0ac87162cd3f4ee1be90aa8ab7d194c55b6",
   "scripts/validate.ts": "cc682967671e0bd89c4faab02a1fa976a67fb89959ece810d397d7e71961bede",
+  "src/blocks/AvisGoogle.astro": "4dd5ed947e48caf1422e0086bd6d339b2e28b3035c70eda81acb7c0e2de5d4b8",
   "src/blocks/Boucle.astro": "e4ed9b5f713c37d6c7bbbcf747757ec670ee3f01878885ab171c1507b0639579",
   "src/blocks/Carte.astro": "70d6a1b310d4f70f0b7c41774499ce6e46349e0d72ac5ca2db25d4f19b8d8715",
   "src/blocks/Chiffres.astro": "2f355a9fda99a0754ab08ad82348e0016a06e9e033b1aaf4ec17006cd7e9ff24",
@@ -95,6 +96,7 @@
   "src/components/Boutons.astro": "550a75d167e0df8079fcfa1ebfd366d1f16a1ec92680a6f1004ca55e1210e111",
   "src/components/ChampPrecision.astro": "c1cd88fd1e68979cb70c93617a3414cafabfa49214a600b57f8dcc887d44cf95",
   "src/components/Diaporama.astro": "131823665b830b0b4571b98c649d2262c067e0ed291c17733b7fa5db66b92d18",
+  "src/components/Etoiles.astro": "281e82bb0e4fe496d068f29e99f3a14cd11ef21e9953c662fdc988c007e59cbc",
   "src/components/FicheInfos.astro": "c7300159612a77bb79613eae70ceb5b284def4b921e3fffd58ab0d807ef447e0",
   "src/components/Icone.astro": "dccb1fbcdbfab8ffb9e14277d96ee61f5f7bd4ff97641447c84131496bc20938",
   "src/components/Img.astro": "4d0144fd43fa598a3cf050b46b476e428ccd702fa6cd3be4f7e1543fe6abb4e4",
@@ -113,6 +115,7 @@
   "src/illustrations/noms.ts": "6cacaec289edcbcaee13a78e208ba581dc4d9c89f384b8e1355d66421f5f3b0f",
   "src/layouts/Base.astro": "50f1f5993c128cf1589bd7a49116fa7ff7417361b4114b6d72770e2973c7be75",
   "src/layouts/details.ts": "df3ef48c406d43d7cbc88dd5831a7a9ae8b605344dc16578adeef919c6465442",
+  "src/lib/avisGoogle.ts": "d968d3fb4d880fda255597d6c0d71b27aa44080e73077d94857b5b0186557eb6",
   "src/lib/collections.ts": "9f922b27a05d22120299e32d18b5a3028ae14d0b2f04386c23836a4b5a92e13c",
   "src/lib/contenu.ts": "f825725e088723d7c413112c21062c4d65d7a576ab41e28847697694d9fabfd4",
   "src/lib/donnees-structurees.ts": "1b456ed51a9a87af2a57bd1e0f577c6a4ebd5ce3f199264619716d0e3ba95601",

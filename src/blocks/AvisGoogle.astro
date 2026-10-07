@@ -1,0 +1,67 @@
+---
+/**
+ * Note et derniers avis de la fiche Google (src/lib/avisGoogle.ts, actualisés chaque jour par l'agence).
+ * cartes : la note puis les avis (les plus pertinents selon Google, au plus 5) ; bandeau : la note sur une ligne.
+ * Sans données (fiche non reliée, aucun avis) : le bloc n'affiche rien.
+ * Exigences de Google respectées : nom de l'auteur (lien vers son profil), mention Google, lien vers la fiche.
+ */
+import Section from '../components/Section.astro';
+import Etoiles from '../components/Etoiles.astro';
+import { ficheGoogle, noteFr, moisFr } from '../lib/avisGoogle';
+const { variant = 'cartes', background, spacing, id, surtitre, titre, intro, nombre = 3, note_min = 4 } = Astro.props;
+const f = ficheGoogle();
+const avis = f ? f.avis.filter((a) => a.note >= note_min).slice(0, nombre) : [];
+const montrer = f && (variant === 'bandeau' || avis.length > 0);
+const pluriel = (n: number) => `${n.toLocaleString('fr-FR')} avis`;
+---
+{montrer && f && (
+<Section {background} {spacing} {id} {surtitre} titre={variant === 'cartes' ? titre : undefined} intro={variant === 'cartes' ? intro : undefined}>
+  <div class:list={['ag', `ag--${variant}`]}>
+    <p class="ag__resume">
+      <span class="ag__note">{noteFr(f.note)}</span>
+      <Etoiles note={f.note} taille={variant === 'bandeau' ? 20 : 22} />
+      <a class="ag__total" href={f.lien} target="_blank" rel="noopener">{pluriel(f.nombre)} sur Google<span class="visually-hidden"> (nouvel onglet)</span></a>
+    </p>
+    {variant === 'cartes' && (
+      <ul class="ag__liste">
+        {avis.map((a) => (
+          <li class="ag__avis">
+            <Etoiles note={a.note} taille={16} />
+            <blockquote class="ag__texte" cite={a.lien}><p>{a.texte}</p></blockquote>
+            <p class="ag__auteur">
+              <span class="ag__initiale" aria-hidden="true">{a.auteur.charAt(0).toUpperCase()}</span>
+              <span>
+                {a.profil ? <a href={a.profil} target="_blank" rel="noopener nofollow">{a.auteur}<span class="visually-hidden"> (profil Google, nouvel onglet)</span></a> : a.auteur}
+                {a.date && <span class="ag__date"><time datetime={a.date}>{moisFr(a.date)}</time> · Avis Google</span>}
+                {!a.date && <span class="ag__date">Avis Google</span>}
+              </span>
+            </p>
+          </li>
+        ))}
+      </ul>
+    )}
+    {variant === 'cartes' && <p class="ag__lien"><a href={f.lien} target="_blank" rel="noopener">Lire tous les avis sur Google<span class="visually-hidden"> (nouvel onglet)</span></a></p>}
+  </div>
+</Section>
+)}
+<style>
+  .ag__resume { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .ag__note { font-size: clamp(30px, 3.4vw, 40px); font-weight: 700; line-height: 1; color: var(--c-text); letter-spacing: -0.02em; }
+  .ag--bandeau .ag__resume { justify-content: center; }
+  .ag--bandeau .ag__note { font-size: 26px; }
+  .ag__total { color: var(--c-text-muted); font-size: 15px; }
+  .ag__liste { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
+  .ag__avis { display: flex; flex-direction: column; gap: 14px; padding: 24px; border: 1px solid var(--c-border); border-radius: var(--radius-lg); background: var(--c-surface); }
+  .ag__texte { margin: 0; flex: 1; }
+  .ag__texte p { margin: 0; color: var(--c-text-body, var(--c-text)); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 7; line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+  .ag__auteur { margin: 0; display: flex; align-items: center; gap: 12px; font-weight: 600; color: var(--c-text); }
+  .ag__auteur a { color: inherit; }
+  .ag__auteur > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+  .ag__initiale { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--c-surface-alt); color: var(--c-primary); font-weight: 700; }
+  .ag__date { font-weight: 400; font-size: 13.5px; color: var(--c-text-muted); }
+  .ag__lien { margin: 22px 0 0; }
+  :global(.on-dark) .ag__note, :global(.on-dark) .ag__auteur { color: var(--c-on-dark); }
+  :global(.on-dark) .ag__total { color: var(--c-on-dark-body); }
+  :global(.on-dark) .ag__avis { background: transparent; border-color: oklch(1 0 0 / 0.18); }
+  :global(.on-dark) .ag__texte p { color: var(--c-on-dark-body); }
+</style>

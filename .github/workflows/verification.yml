@@ -8,6 +8,8 @@ on:
 
 jobs:
   verifier:
+    # Ces workflows servent aux sites ; dans le dépôt du socle lui-même (sans contenus) ils ne tournent pas
+    if: ${{ github.repository != 'loopy117/socle-sites' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
