@@ -1,9 +1,9 @@
 {
  "socle": "socle-sites",
- "version": "1.5.0",
+ "version": "1.5.1",
  "modele": "collectivite",
- "commit": "16acdb2",
- "installe": "2026-10-07T17:04:10.871Z",
+ "commit": "87e5078",
+ "installe": "2026-10-08T06:25:46.840Z",
  "motifs": {
   "socle": [
    ".github/workflows/**",
@@ -48,7 +48,7 @@
   "scripts/catalogue.ts": "310e07b5657bf602694e33c685fa2b657e927fa98b8e5da6e4ccb4de045b15fe",
   "scripts/contexte-ia.ts": "f045fff2d5eb9751c0717a38bdd8515475558cf87ca7adec6e11656ea29cefae",
   "scripts/copier-medias.mjs": "2f659ee132f9814de47405deb2c0e50f8df7989c89273403125eb4f8aa9e7cf7",
-  "scripts/csp.mjs": "8956fcf355832594e32fd2c45cf9f31e3e3bcc8b7fd4034716beabb59430b8f3",
+  "scripts/csp.mjs": "d36d396ad40772ba80110ea0368d4890c2a007d95a4ebc373992410336c8fd2c",
   "scripts/decap.ts": "e0fb5389e81cebce8ab048a3cc59cdcecd78f54a7901c33d3532a0e1dfdf0d42",
   "scripts/diffusion.ts": "22a7aaff6b804f0491f8861efec725d27e00c189aad910cd61499633e76a005a",
   "scripts/import-media.ts": "ca9ea0a8fc4cdc264cb9ee4530f0bd0775f5b3fce01560f0cd86907fa230dab2",

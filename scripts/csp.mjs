@@ -19,7 +19,9 @@ const NON_EXECUTES = /^(application\/(ld\+)?json|text\/(template|plain)|speculat
 function politique(empreintes) {
   return [
     "default-src 'self'",
-    `script-src 'self' 'wasm-unsafe-eval'${empreintes.map((h) => ` 'sha256-${h}'`).join('')}`,
+    // 'unsafe-inline' : secours pour les navigateurs d'avant les empreintes (CSP 1), ignoré par tous les autres dès
+    // qu'une empreinte est présente ; jamais sur une page sans empreinte, où il serait réellement appliqué.
+    `script-src 'self' 'wasm-unsafe-eval'${empreintes.map((h) => ` 'sha256-${h}'`).join('')}${empreintes.length ? " 'unsafe-inline'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self'",
