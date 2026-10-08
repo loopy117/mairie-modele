@@ -6,6 +6,7 @@
  *   avertissements          : page orpheline, moins de 2 liens entrants depuis un contenu,
  *                             à plus de 3 clics de l'accueil, plus de 15 liens dans un texte,
  *                             page SEO (role: seo, zones par défaut) sans lien vers une page aimant
+ *   erreurs, si data/site.json › engagement.aimant_obligatoire : toute page indexable sans lien vers une page aimant
  *
  * Écrit ai/maillage.json (lu par l'IA à chaque demande) et affiche un résumé.
  */
@@ -113,6 +114,18 @@ for (const p of audit) {
 
 // 4. Engagement (règles « Garder le visiteur ») : chaque page d'entrée SEO renvoie vers une page aimant
 const aimants = audit.filter((p) => roles.get(p.url) === 'aimant').map((p) => p.url);
+// Option du site (data/site.json › engagement.aimant_obligatoire) : toute page indexable, accueil compris, doit proposer
+// une page aimant, sinon le build échoue (objectif : au moins deux pages vues par visite)
+const engagement = (() => { try { return JSON.parse(readFileSync('data/site.json', 'utf8')).engagement ?? {}; } catch { return {}; } })();
+if (engagement.aimant_obligatoire) {
+  const exemptees = new Set<string>((engagement.exemptees ?? ['/contact']).map(normaliser));
+  if (!aimants.length) erreurs.push('/ : engagement.aimant_obligatoire, mais aucune page « aimant » (role: aimant) n\'est publiée');
+  else for (const i of infos.values()) {
+    if (dansSitemap.size && !dansSitemap.has(i.url)) continue;
+    if (aimants.includes(i.url) || exemptees.has(i.url)) continue;
+    if (!i.contenu.some((l) => aimants.includes(l))) erreurs.push(`${i.url} : aucun lien vers une page aimant (${aimants.slice(0, 3).join(', ')}), obligatoire sur ce site (data/site.json › engagement)`);
+  }
+}
 const entreesSeo = audit.filter((p) => roles.get(p.url) === 'seo');
 if (entreesSeo.length && !aimants.length) avertissements.push(`/ : aucune page « aimant » publiée (prix, guide, avant/après, aides) vers laquelle envoyer les visiteurs arrivés de Google`);
 else for (const p of entreesSeo) {

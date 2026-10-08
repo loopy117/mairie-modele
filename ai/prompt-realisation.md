@@ -31,7 +31,37 @@ proposition propre, complète et honnête, prête à être mise en ligne telle q
 - Écrire uniquement dans `content/`, `data/menu.json`, `data/footer.json`, `data/site.json`, `data/formulaires.json` et `media/` (plus `data/taxonomies.json` pour un brief).
 - Importer une photo du client : `npm run import-media -- _demande/photos/photo-01.jpg <dossier>/<nom-descriptif>.jpg`
   puis la référencer en `/img/<dossier>/<nom-descriptif>.jpg`, avec un texte alternatif qui décrit ce qu'on voit.
+- Documents du client : `_demande/documents/document-NN.<ext>` (original) et, sauf pour un PDF, `document-NN.txt`
+  (son texte : titres en `#`, listes en `-`, tableaux en `|`). Lis le `.txt` ; pour un PDF, lis le PDF.
 - Vérifier : `npm run validate` (ou `npm run validate -- --json`). Corrige toutes les erreurs, 3 passes au maximum.
+
+## Textes fournis par le client (`recap.documents`)
+
+Le client a écrit ses textes lui-même et veut en garder la maîtrise : son texte est repris, pas réécrit. Mêmes
+mots, même ordre, mêmes paragraphes : tu ne résumes pas, ne reformules pas, n'ajoutes pas de phrase, ne retires rien
+de ce que `usage` te demande de reprendre. Ton travail est la mise en forme : répartir le texte dans des blocs du
+catalogue (un titre du document devient un titre de section, une liste reste une liste, un tableau devient un tableau
+ou une liste). Si un texte dépasse la limite d'un champ, répartis-le sur plusieurs blocs plutôt que de le couper.
+Ce que tu écris toi-même se limite à ce que le site exige et que le document ne donne pas : titre et description
+pour Google, textes des boutons, textes alternatifs. Selon `reprise` :
+
+- `corriger` (cas par défaut) : en plus,
+  - corrige les fautes d'orthographe, de grammaire, d'accord et de typographie française (espaces avant « : ; ! ? »,
+    guillemets « », majuscules accentuées). Jamais un mot remplacé par un autre « plus joli », jamais une tournure
+    changée : seulement ce qui est faux ;
+  - ajoute des intertitres là où un long passage sans titre (plus de 3 paragraphes ou 250 mots) gagnerait à être
+    aéré : courts, tirés des mots du passage, sans promesse ni fait nouveau ;
+  - note **chaque** changement dans `modifications_texte` du rapport (voir plus bas). Le client les voit à la
+    relecture et peut revenir à son texte, point par point : un changement non noté est interdit.
+- `mot_pour_mot` : aucun changement, pas même une faute. Une faute ou une information douteuse se signale dans
+  `hypotheses` (citation exacte et proposition), le client décidera.
+- `adapter` : le client t'autorise à adapter son texte pour le site (structure, longueur, référencement), sans
+  rien inventer ni retirer d'information.
+
+Une information douteuse (date passée, prix incohérent) ne se change jamais : signale-la dans `hypotheses`.
+Une partie du document que `usage` ne mentionne pas n'est pas publiée : dis-le dans `hypotheses`.
+Action `corriger` : si le client demande de revenir à son texte d'origine pour certains points, remets exactement
+ses mots (ou retire l'intertitre) et retire ces points de `modifications_texte` ; garde les autres.
 
 ## Demande de type brief (`"type": "brief"` dans la demande)
 
@@ -114,8 +144,12 @@ trouverait. Ne recopie aucun texte trouvé.
   "hypotheses": ["Choix faits sans consigne explicite"],
   "questions": ["Questions encore ouvertes pour le client (une par marqueur restant)"],
   "pages": ["/url/des/pages/creees-ou-modifiees"],
+  "modifications_texte": [
+    { "type": "orthographe", "page": "/url", "avant": "mot ou fin de phrase exacts du client", "apres": "version corrigée" },
+    { "type": "intertitre", "page": "/url", "avant": "premiers mots du passage qui suit", "apres": "Intertitre ajouté" }
+  ],
   "suggestions_brief": ["Pour une demande de type brief : ce qui améliorerait le questionnaire de ce métier"]
 }
 ```
 
-`questions` est vide si tout est complet. Les questions sont formulées pour un artisan, sans jargon.
+`modifications_texte` : seulement pour un texte fourni par le client en `reprise: corriger`, sinon liste vide ; `avant` cite assez de mots pour retrouver l'endroit (10 à 15), sans dépasser une phrase. `questions` est vide si tout est complet. Les questions sont formulées pour un artisan, sans jargon.

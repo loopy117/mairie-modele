@@ -1,9 +1,9 @@
 {
  "socle": "socle-sites",
- "version": "1.5.1",
+ "version": "1.9.2",
  "modele": "collectivite",
- "commit": "87e5078",
- "installe": "2026-10-08T06:25:46.840Z",
+ "commit": "46b22de",
+ "installe": "2026-10-08T14:23:53.671Z",
  "motifs": {
   "socle": [
    ".github/workflows/**",
@@ -34,7 +34,7 @@
   ".github/workflows/deploiement.yml": "5f7924151c081441046d421bb27ba22669a6a812ddcaeb40b00cf584747c6214",
   ".github/workflows/verification.yml": "aa5fe0d9f25d584987b6dfdd59cb8212e7c39383d29d8ba7a12ec8093fb5882e",
   ".gitignore": "83050c698c8474804025559cee2109790bfddcc79c407ea7c56de6e92a3dced2",
-  "ai/prompt-realisation.md": "b47a645b8965e21bd9d81db681215f040c8102b6c1ff0709d4c62afee768157b",
+  "ai/prompt-realisation.md": "4f4a90068e6aed7cbe507332f1f4dcfe3a635c4838d5a968680bf2d78fe9762f",
   "ai/regles.md": "747c838c001b310a0de67dd7bd980c8f3d5312e76b97c88deecc74d6c61ea794",
   "astro.config.mjs": "6651025fbe5031bbb9b920a8b55a4e5ce09eef912e0f5965025591073cab292e",
   "package-lock.json": "df286436986dfbe1b291d252e7fcdff2578b633338844324427d08d6b694d6d4",
@@ -53,7 +53,7 @@
   "scripts/diffusion.ts": "22a7aaff6b804f0491f8861efec725d27e00c189aad910cd61499633e76a005a",
   "scripts/import-media.ts": "ca9ea0a8fc4cdc264cb9ee4530f0bd0775f5b3fce01560f0cd86907fa230dab2",
   "scripts/indexnow.mjs": "60af474708a0fd5c6dea20254a6952374f3e0db908020e954efea959a1ca6c67",
-  "scripts/maillage.ts": "8ac459cf82301b131ca66728e4d279c55efcb270aa5e65293a70f65aa73c5ee6",
+  "scripts/maillage.ts": "a6f8826d1ce420d45f898089e2182e3de276c3e00ec4098cfaae8b653dfeb104",
   "scripts/partage.mjs": "1fe727f9a35f483dddc894555ee72a6c2a213f5975a1d83393c440e4f4e1a9f8",
   "scripts/photos.ts": "082e8488508e460fbc0aecd4c82d2da736cdf6b8d43e7bdbadf10ff037118de0",
   "scripts/phototheque.mjs": "c40f65b9fc0a2a7cce016a0e5597d4dd7ca5f6d0d065e837f68aadbc6d177c4d",
@@ -128,6 +128,7 @@
   "src/lib/media.ts": "f0003f05cb6e243c887e8518347164d71c2ed614cede71b310791d7b75859398",
   "src/lib/publication.ts": "cb4f8ebe73aa2136fe780dcbbd4ac1e43d1b31ea1920003c0ed945107d8ec115",
   "src/lib/requete.ts": "518301715b75eccef8baf49b7d67dd24063c8a3397600863175e487656b9c8cf",
+  "src/lib/scoresSites.ts": "687d919692322514355a0953c6eb735e5d5afb63371bfb1c66fac1862d452f2f",
   "src/lib/site.ts": "cb877de4459cf7e34c27cf183c16d9fa91a851e3205cbe419f9e43c1f9ee59f3",
   "src/lib/urls.ts": "fdef69eb337df9317934d62685eb637d2e674825d33131440caaa006ddf55736",
   "src/pages/404.astro": "0eea8b65708dcb696df7c317a340344612a1f7ce11226ee80b1c4a740a5355b1",
